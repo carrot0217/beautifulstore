@@ -846,9 +846,10 @@ def user_home():
         FROM orders o
         JOIN items i ON CAST(o.item AS INTEGER) = i.id
         WHERE o.status = '완료'
+          AND o.user_id = %s
           AND o.delivery_date BETWEEN %s AND %s
         ORDER BY o.delivery_date ASC
-    """, (today, seven_days_later))
+    """, (username, today, seven_days_later))
     schedule = [
         {
             "name": row[0],
@@ -963,9 +964,10 @@ def user_schedule():
         FROM orders o
         JOIN items i ON CAST(o.item AS INTEGER) = i.id
         WHERE o.status = '완료'
+          AND o.user_id = %s
           AND o.delivery_date BETWEEN %s AND %s
         ORDER BY o.delivery_date ASC
-    """, (today, seven_days_later))
+    """, (session['user_id'], today, seven_days_later))
     schedule = [
         {
             "name": row[0],
