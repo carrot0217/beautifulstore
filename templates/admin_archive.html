@@ -1,0 +1,91 @@
+<!-- templates/admin_archive.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>📦 아카이브 주문 목록</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background-color: #fffaf3;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 40px;
+      text-align: center;
+    }
+    h2 {
+      color: #5a4031;
+      margin-bottom: 20px;
+    }
+    table {
+      margin: 0 auto;
+      width: 95%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+    }
+    th {
+      background-color: #ffcc80;
+      color: #4e342e;
+    }
+    .back-btn {
+      display: inline-block;
+      margin-bottom: 26px;
+      padding: 10px 18px;
+      background-color: #ffd180;
+      color: #4e342e;
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: bold;
+      box-shadow: 0 2px 6px #ffecb3;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 14px;
+      font-size: 0.95em;
+      font-weight: bold;
+    }
+    .badge-done { background: #66bb6a; color: #fff; }
+    .badge-cancel { background: #bdbdbd; color: #555; }
+    .badge-cancel-stock { background: #ef5350; color: #fff; }
+  </style>
+</head>
+<body>
+  <a href="{{ url_for('dashboard') }}" class="back-btn">⬅️ 관리자 홈으로</a>
+  <h2>📦 아카이브 주문 목록</h2>
+
+  <table>
+    <tr>
+      <th>신청일</th>
+      <th>매장</th>
+      <th>품목</th>
+      <th>수량</th>
+      <th>상태</th>
+      <th>배송일</th>
+      <th>메모</th>
+      <th>취소사유</th>
+      <th>백업일</th>
+    </tr>
+    {% for o in orders %}
+    <tr>
+      <td>{{ o[0].strftime('%Y-%m-%d') if o[0] }}</td>
+      <td>{{ o[1] }}</td>
+      <td>{{ o[2] }}</td>
+      <td>{{ o[3] }}</td>
+      <td>
+        {% if o[4] == '완료' %}<span class="badge badge-done">완료</span>
+        {% elif o[4] and o[4].startswith('취소') %}<span class="badge badge-cancel">{{ o[4] }}</span>
+        {% else %}{{ o[4] or '-' }}
+        {% endif %}
+      </td>
+      <td>{{ o[5].strftime('%Y-%m-%d') if o[5] }}</td>
+      <td>{{ o[6] or '-' }}</td>
+      <td>{{ o[7] or '-' }}</td>
+      <td>{{ o[8].strftime('%Y-%m-%d %H:%M') if o[8] }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

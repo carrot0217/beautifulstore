@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>릴라스테이션 관리자홈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background: #fffaf3;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 60px;
+    }
+    h1 {
+      color: #5a4031;
+      font-size: 2.3em;
+      margin-bottom: 25px;
+    }
+    .menu-grid {
+      display: flex;
+      justify-content: center;
+      gap: 38px;
+      flex-wrap: wrap;
+    }
+    .menu-card {
+      background: #ffe082;
+      border-radius: 18px;
+      padding: 32px 44px;
+      box-shadow: 0 3px 20px #eee7;
+      font-size: 1.19em;
+      color: #473120;
+      margin-bottom: 22px;
+      min-width: 220px;
+      min-height: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: box-shadow 0.2s;
+      text-decoration: none;
+    }
+    .menu-card:hover {
+      box-shadow: 0 8px 24px #ffe082b6;
+      background: #fffde7;
+    }
+    .emoji { font-size: 2.3em; margin-bottom: 9px; }
+
+    .archive-form { margin-top: 40px; }
+    .archive-btn {
+      background-color: #ffcc80;
+      color: #5a4031;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 28px;
+      font-size: 1.05em;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 8px #e4c88a;
+      transition: background 0.2s;
+    }
+    .archive-btn:hover { background-color: #ffe0b2; }
+
+    .note-btn {
+      position: fixed;
+      bottom: 20px; right: 20px;
+      background: #ffd54f;
+      border-radius: 50%;
+      width: 60px; height: 60px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      font-size: 26px;
+      color: #4e342e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 999;
+    }
+
+    .msg-box {
+      position: fixed;
+      bottom: 90px; right: 20px;
+      width: 320px;
+      max-height: 420px;
+      background: #fffef9;
+      border: 2px solid #ffe082;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      display: none;
+      flex-direction: column;
+      z-index: 999;
+      overflow: hidden;
+    }
+
+    .msg-box-header {
+      background: #ffe082;
+      padding: 12px;
+      font-weight: bold;
+      color: #5a4031;
+      text-align: center;
+    }
+
+    .msg-tabs {
+      display: flex;
+      background: #fff9ec;
+      border-bottom: 1px solid #f0d89d;
+    }
+
+    .msg-tabs button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: none;
+      font-weight: bold;
+      color: #6d4c41;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .msg-tabs button.active {
+      background: #ffe082;
+      color: #3e2723;
+    }
+
+    .msg-section {
+      display: none;
+      padding: 12px;
+    }
+    .msg-section.active {
+      display: block;
+    }
+
+    .msg-item {
+      padding: 10px 14px;
+      border-bottom: 1px solid #f5e6c3;
+      text-align: left;
+    }
+    .msg-item strong { display: block; margin-bottom: 4px; color: #4e342e; }
+    .msg-item small { color: #a1887f; }
+
+    .msg-compose select, .msg-compose textarea {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 8px;
+      font-size: 0.9em;
+      border-radius: 8px;
+      border: 1px solid #ddd0b8;
+    }
+
+    .msg-compose button {
+      background-color: #ffcc80;
+      border: none;
+      padding: 8px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #4e342e;
+    }
+
+    .msg-compose button:hover { background-color: #ffe0b2; }
+  </style>
+</head>
+<body>
+  <h1>📊 릴라스테이션 관리자홈</h1>
+  <div class="menu-grid">
+    <a class="menu-card" href="/admin/items"><span class="emoji">📦</span>상품관리</a>
+    <a class="menu-card" href="/admin/items/chart"><span class="emoji">📈</span>재고 체크</a>
+    <a class="menu-card" href="/admin/orders"><span class="emoji">📜</span>전체 주문목록</a>
+    <a class="menu-card" href="/admin/stats"><span class="emoji">📊</span>주문 통계</a>
+    <a class="menu-card" href="/admin/users"><span class="emoji">👤</span>사용자 관리</a>
+    <a class="menu-card" href="/admin/logs"><span class="emoji">📜</span>활동 로그</a>
+    <a class="menu-card" href="/admin/messages"><span class="emoji">📨</span>전체  쪽지 관리</a>
+    <a class="menu-card" href="/admin/archive/view"><span class="emoji">💃️</span>아카이브 조회</a>
+    <a class="menu-card" href="/logout"><span class="emoji">🚪</span>로그아웃</a>
+  </div>
+
+  <form class="archive-form" method="get" action="/admin/orders/delete_completed_all">
+    <button type="submit" class="archive-btn" onclick="return confirm('📦 6개월 이상된 주문을 아카이브 하시겠습니까?')">
+      📦 오래된 주문 아카이브
+    </button>
+  </form>
+
+  <!--   <!-- \uc쪽지함 개요 -->
+  <div class="note-btn" onclick="toggleMsgBox()">💌</div>
+  <div class="msg-box" id="msgBox">
+    <div class="msg-box-header">쪽지함</div>
+    <div class="msg-tabs">
+      <button onclick="showTab('inbox')" class="active">📥 받은쪽지</button>
+      <button onclick="showTab('compose')">✏️ 새 쪽지작성</button>
+    </div>
+    <div class="msg-section active" id="inboxSection">
+      <div id="msgList">
+        <div class="msg-item">📍 쪽지를 불러오는 중입니다...</div>
+      </div>
+    </div>
+    <div class="msg-section" id="composeSection">
+      <div class="msg-compose">
+        <select id="toUser">
+          <option value="">받는 사용자 선택</option>
+        </select>
+        <textarea id="msgContent" rows="4" placeholder="메시지를 입력하세요..."></textarea>
+        <button type="button" onclick="sendMessage()">쪽지 보내기</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleMsgBox() {
+      const box = document.getElementById('msgBox');
+      box.style.display = (box.style.display === 'flex') ? 'none' : 'flex';
+      box.style.flexDirection = 'column';
+      if (box.style.display === 'flex') {
+        loadMessages();
+        showTab('inbox');
+      }
+    }
+
+    function showTab(tab) {
+      document.querySelectorAll('.msg-tabs button').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('inboxSection').classList.remove('active');
+      document.getElementById('composeSection').classList.remove('active');
+
+      if (tab === 'inbox') {
+        document.querySelector('.msg-tabs button:nth-child(1)').classList.add('active');
+        document.getElementById('inboxSection').classList.add('active');
+      } else {
+        document.querySelector('.msg-tabs button:nth-child(2)').classList.add('active');
+        document.getElementById('composeSection').classList.add('active');
+      }
+    }
+
+    function sendMessage() {
+      const to = document.getElementById('toUser').value;
+      const content = document.getElementById('msgContent').value.trim();
+      if (!to || !content) return alert("받는 사용자와 메시지를 모두 입력해 주세요.");
+      fetch('/messages/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: to, content: content })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message);
+        if (data.success) {
+          document.getElementById('msgContent').value = '';
+          loadMessages();
+          showTab('inbox');
+        }
+      });
+    }
+
+    function loadMessages() {
+      fetch('/messages/inbox')
+        .then(res => res.json())
+        .then(data => {
+          const msgList = document.getElementById('msgList');
+          msgList.innerHTML = '';
+          if (data.messages.length === 0) {
+            msgList.innerHTML = '<div class="msg-item">📭 받은 쪽지가 없습니다.</div>';
+          } else {
+            data.messages.forEach(msg => {
+              msgList.innerHTML += `
+                <div class="msg-item" id="msg-${msg.id}">
+                  <strong>${msg.sender}</strong>
+                  ${msg.content}<br>
+                  <small>${msg.timestamp}</small><br>
+                  <button onclick="deleteMessage(${msg.id})" style="margin-top:6px; font-size:0.8em; background:#fdd; border:none; padding:4px 8px; border-radius:6px; cursor:pointer;">🗑 삭제</button>
+                </div>`;
+            });
+          }
+        });
+    }
+
+    function deleteMessage(id) {
+      if (!confirm("이 쪽지를 삭제하시겠습니까?")) return;
+      fetch('/messages/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          const elem = document.getElementById(`msg-${id}`);
+          if (elem) elem.remove();
+        }
+      });
+    }
+
+    function loadRecipientOptions() {
+      fetch('/messages/recipients')
+        .then(res => res.json())
+        .then(data => {
+          const select = document.getElementById('toUser');
+          select.innerHTML = '<option value="">받는 사용자 선택</option>';
+          let addedAdmin = false;
+          data.users.forEach(user => {
+            const opt = document.createElement('option');
+            if (user.is_admin) {
+              if (!addedAdmin) {
+                opt.value = 'admin';
+                opt.textContent = '관리자';
+                select.appendChild(opt);
+                addedAdmin = true;
+              }
+            } else {
+              opt.value = user.username;
+              opt.textContent = user.store;
+              select.appendChild(opt);
+            }
+          });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadRecipientOptions();
+    });
+  </script>
+</body>
+</html>

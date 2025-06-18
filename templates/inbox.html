@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>📬 받은 쪽지함</title>
+  <style>
+    body { background: #fffaf3; font-family: 'Segoe UI', sans-serif; padding: 40px; }
+    h1 { color: #5a4031; margin-bottom: 30px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 2px 10px #eee;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 14px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #ffecb3;
+      color: #4e342e;
+    }
+
+    .btn-compose {
+      margin-top: 24px;
+      background-color: #ffcc80;
+      font-weight: bold;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    /* 모달 스타일 */
+    #composeModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    #composeModalContent {
+      background: #fffaf3;
+      padding: 24px 30px;
+      border-radius: 12px;
+      width: 400px;
+      box-shadow: 0 0 16px #00000033;
+    }
+
+    #composeModalContent h3 {
+      margin-top: 0;
+      margin-bottom: 16px;
+      color: #4e342e;
+    }
+
+    #composeModalContent select,
+    #composeModalContent textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-family: inherit;
+    }
+
+    #composeModalContent button {
+      padding: 8px 16px;
+      margin-right: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #composeModalContent .send-btn {
+      background: #ffcc80;
+      font-weight: bold;
+    }
+
+    #composeModalContent .cancel-btn {
+      background: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <h1>📬 받은 쪽지함</h1>
+
+  {% if messages %}
+    <table>
+      <tr>
+        <th>보낸 사람</th>
+        <th>내용</th>
+        <th>받은 시간</th>
+      </tr>
+      {% for msg in messages %}
+      <tr>
+        <td>{{ msg[0] }}</td>
+        <td>{{ msg[1] }}</td>
+        <td>{{ msg[2] }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <p>📭 받은 쪽지가 없습니다.</p>
+  {% endif %}
+
+  <button class="btn-compose" onclick="openComposeModal()">📩 새 쪽지 보내기</button>
+
+  <!-- 쪽지 작성 모달 -->
+  <div id="composeModal">
+    <div id="composeModalContent">
+      <h3>📤 쪽지 보내기</h3>
+      <form method="post" action="/user/send_message">
+        <select name="recipient" required>
+          <option value="">👤 받는 사람 선택</option>
+          {% for uid, store in recipients %}
+            <option value="{{ uid }}">{{ uid }}{% if store %} ({{ store }}){% endif %}</option>
+          {% endfor %}
+        </select>
+        <textarea name="content" rows="4" placeholder="내용을 입력하세요" required></textarea>
+        <div style="text-align: right;">
+          <button type="submit" class="send-btn">전송</button>
+          <button type="button" class="cancel-btn" onclick="closeComposeModal()">취소</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openComposeModal() {
+      document.getElementById("composeModal").style.display = "flex";
+    }
+    function closeComposeModal() {
+      document.getElementById("composeModal").style.display = "none";
+    }
+  </script>
+</body>
+</html>

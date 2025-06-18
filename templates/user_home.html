@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>아름다운가게 홈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #fffaf3;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: auto;
+      width: 100%;
+      max-width: 100vw;
+    }
+    .top-bar {
+      background-color: #d88f30;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 12px 24px;
+      position: relative;
+    }
+    .logo {
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+    .user-info-box {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      margin-top: 2px;
+    }
+    .user-name {
+      font-size: 0.95em;
+      font-weight: bold;
+      color: white;
+    }
+    .clock-box {
+      background-color: #fff3e0;
+      color: #5a4031;
+      padding: 6px 14px;
+      border-radius: 14px;
+      font-size: 1em;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      border: 1px solid #ffd54f;
+      font-family: 'Segoe UI', sans-serif;
+      transition: background-color 0.3s ease;
+    }
+    .clock-box.blink {
+      background-color: #ffe0b2;
+    }
+    .content {
+      display: flex;
+      flex-direction: row;
+      padding: 20px 30px;
+      gap: 30px;
+      flex: 1;
+      overflow: visible;
+    }
+    .left-panel {
+      flex: 0.9;
+      padding: 30px;
+      overflow-y: auto;
+    }
+    .right-panel {
+      flex: 1;
+      padding: 30px 20px 30px 0;
+      overflow-y: auto;
+    }
+    .section {
+      background-color: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      border: 1px solid #f2e0c0;
+      padding: 24px;
+      margin-bottom: 30px;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .item-card {
+      width: 160px;
+      background-color: #fffef5;
+      border: 1px solid #eee;
+      border-radius: 14px;
+      padding: 12px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(224, 215, 192, 0.7);
+    }
+    .btn-see-all {
+      float: right;
+      font-size: 0.85em;
+      padding: 6px 12px;
+      background-color: #ffd54f;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.2s ease;
+    }
+    .btn-see-all:hover {
+      background-color: #ffcc33;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+    .modal-content {
+      background: #fffaf0;
+      border-radius: 16px;
+      padding: 30px;
+      width: 340px;
+      box-shadow: 0 0 20px #aaa4;
+      color: #5a4031;
+      text-align: center;
+      position: relative;
+    }
+    .image-container {
+      position: relative;
+      display: inline-block;
+    }
+    .item-image {
+      width: 100%;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    .zoom-button {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background-color: #ffe082;
+      border: none;
+      border-radius: 50%;
+      padding: 4px 8px;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+    .apply-btn, .close-btn {
+      background-color: #ffb74d;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      margin: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      color: #5a4031;
+    }
+    #zoomModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .zoomed-img {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 12px;
+      box-shadow: 0 0 16px #fff;
+    }
+    #modalItemPrice {
+      font-weight: bold;
+      color: #0d47a1;
+    }
+    #modalItemQty {
+      font-weight: bold;
+      color: #c62828;
+    }
+#modalQuantity {
+  width: 80px;
+  padding: 8px 12px;
+  font-size: 1em;
+  border: 2px solid #ffcc80;
+  border-radius: 8px;
+  background-color: #fffaf0;
+  color: #5a4031;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#modalQuantity:focus {
+  border-color: #ffb74d;
+  box-shadow: 0 0 6px rgba(255, 183, 77, 0.4);
+}
+  .custom-request-btn {
+    padding: 8px 14px;
+    border-radius: 10px;
+    background-color: #ffcc80;
+    color: #4e342e;
+    font-weight: bold;
+    font-size: 0.9em;
+    border: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  .custom-request-btn:hover {
+    background-color: #ffb74d;
+  }
+  .quantity-submit {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .quantity-submit input[type="number"] {
+    width: 50px;
+    padding: 6px;
+    border-radius: 6px;
+    border: 2px solid #ffcc80;
+    background-color: #fffaf0;
+    text-align: center;
+    font-weight: bold;
+    color: #5a4031;
+  }
+  .custom-request-btn {
+    padding: 8px 14px;
+    border-radius: 10px;
+    background-color: #ffcc80;
+    color: #4e342e;
+    font-weight: bold;
+    font-size: 0.9em;
+    border: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  .custom-request-btn:hover {
+    background-color: #ffb74d;
+  }
+.custom-alert {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.custom-alert-content {
+  background: #fffaf0;
+  padding: 30px;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  text-align: center;
+  color: #5a4031;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+.custom-alert-content button {
+  margin-top: 20px;
+  padding: 8px 20px;
+  border: none;
+  background-color: #ffb74d;
+  color: #4e342e;
+  font-weight: bold;
+  border-radius: 10px;
+  cursor: pointer;
+}
+  .image-container {
+    position: relative;
+  }
+  .zoom-button {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background-color: #ffe082;
+    border: none;
+    border-radius: 50%;
+    padding: 4px 8px;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .modal#zoomModal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+  .zoomed-img {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 12px;
+    box-shadow: 0 0 16px #fff;
+  }
+.logout-button {
+  background-color: #fff3e0;
+  color: #5a4031;
+  font-weight: bold;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: background 0.2s;
+}
+.logout-button:hover {
+  background-color: #ffe0b2;
+}
+<style>
+  /* ... 기존 CSS 유지 ... */
+
+   /* ✅ 반응형 스타일 추가 */
+    @media screen and (max-width: 768px) {
+      .top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .user-info-box {
+        align-items: flex-start;
+        margin-top: 10px;
+      }
+      .content {
+        flex-direction: column;
+        padding: 10px 16px;
+        gap: 20px;
+      }
+      .item-card {
+        width: 100% !important;
+        min-width: auto !important;
+      }
+      .btn-see-all {
+        float: none;
+        display: block;
+        width: 100%;
+        margin-top: 8px;
+      }
+      .section {
+        padding: 16px;
+      }
+      .quantity-submit {
+        flex-direction: column;
+        gap: 6px;
+      }
+      .clock-box {
+        font-size: 0.9em;
+        padding: 4px 10px;
+      }
+      .logout-button {
+        width: 100%;
+      }
+      .popup-box {
+        width: 90% !important;
+      }
+      .modal-content {
+        width: 90% !important;
+      }
+    }
+
+  </style>
+
+<div class="top-bar">
+  <div class="logo">아름다운가게</div>
+
+  <div class="user-info-box">
+    <div class="user-name">{{ store_name }}님 어서오세요</div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <div id="clock" class="clock-box">--:--:--</div>
+
+      <!-- 로그아웃 버튼 -->
+      <a href="{{ url_for('logout') }}">
+        <button class="logout-button">로그아웃</button>
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <!-- 좌: 상품 둘러보기 -->
+  <div style="flex: 1.1;">
+    <div class="section">
+      <h2>🧸 상품 둘러보기
+        <a href="{{ url_for('user_request_form') }}">
+          <button class="btn-see-all">+ 더보기</button>
+        </a>
+      </h2>
+      <div class="item-list" style="display: flex; flex-wrap: wrap; gap: 18px;">
+        {% for item in items[:8] %}  <!-- 최대 8개만 표시 -->
+        <div class="item-card" style="min-width: 160px; flex: 0 0 auto;">
+          <div class="image-container" style="position: relative;">
+            <img src="{{ item.image_url }}" alt="상품 이미지" style="width:100%; border-radius:10px; margin-bottom:10px;">
+            <button class="zoom-button" onclick="zoomImage('{{ item.image_url }}')" style="position: absolute; top: 8px; right: 8px; background-color: #ffe082; border: none; border-radius: 50%; padding: 4px 8px; font-size: 14px; cursor: pointer;">🔍</button>
+          </div>
+          <h3>{{ item.name }}</h3>
+          <p><strong>생산단가:</strong> {{ item.price | int }}원</p>
+          <div class="quantity-submit" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <input type="number" id="quantity-{{ item.id }}" min="1" value="1" style="width: 50px; padding: 4px 6px; border-radius: 6px; border: 1px solid #ccc; text-align: center;">
+            <button class="custom-request-btn" onclick="submitRequestDirect('{{ item.id }}')" style="background-color: #ffcc80; border: none; border-radius: 8px; padding: 6px 10px; font-weight: bold; cursor: pointer;">🛒 담기</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- 우: 입고 일정(상), 주문 이력(하) -->
+  <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
+    <div class="section">
+      <h2>📦 입고 일정
+        <a href="{{ url_for('user_schedule') }}">
+          <button class="btn-see-all">전체 보기</button>
+        </a>
+      </h2>
+      <div>
+        {% for s in schedule %}
+        <div>{{ s.delivery_date }} | {{ s.name }} | {{ s.quantity }}개 | 배송중 🚚</div>
+        {% else %}
+        <div>📬 예정된 입고 일정이 없습니다.</div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="section">
+      <h2>📁 주문 이력
+        <a href="{{ url_for('user_orders') }}">
+          <button class="btn-see-all">+ 더보기</button>
+        </a>
+      </h2>
+      {% for order in recent_orders %}
+      <div class="order-history-entry">
+        {{ order.order_date }} | {{ order.name }} {{ order.quantity }}개
+      </div>
+      {% else %}
+      <div class="order-history-entry">주문 내역이 없습니다.</div>
+      {% endfor %}
+    </div>
+    <div class="footer" style="margin-top: 10px; text-align: right; font-size: 0.95em; color: #6b4b27; padding-right: 10px;">
+      릴라스테이션 ©2025 Created by carrot0217
+    </div>
+  </div>
+</div>
+  <div class="modal" id="requestModal">
+    <div class="modal-content">
+      <h3 id="modalItemName">상품명</h3>
+      <div class="image-container">
+        <img id="modalItemImg" src="" alt="" class="item-image">
+        <button class="zoom-button" onclick="openImageZoom()">🔍</button>
+      </div>
+      <p>가격: <span id="modalItemPrice"></span>원</p>
+      <p>재고 수량: <span id="modalItemQty"></span>개</p>
+      <label for="modalQuantity">신청 수량</label><br>
+      <input type="number" id="modalQuantity" min="1" value="1">
+      <br><br>
+      <button onclick="submitModalRequest()" class="apply-btn">신청</button>
+      <button onclick="closeModal()" class="close-btn">닫기</button>
+      <input type="hidden" id="modalItemId">
+    </div>
+  </div>
+ <div class="modal" id="zoomModal" onclick="closeZoomModal()">
+  <img id="zoomedImage" class="zoomed-img" src="" alt="확대 이미지">
+</div>
+<div id="popup-modal" class="popup-modal" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+  <div class="popup-box" style="background:white; padding:24px 36px; border-radius:20px; text-align:center; box-shadow:0 0 20px rgba(0,0,0,0.2);">
+    <div class="popup-icon" id="popup-emoji" style="font-size:2rem; margin-bottom:10px;">🎉</div>
+    <div class="popup-title" id="popup-msg" style="font-size:1.1rem; margin-bottom:16px;">신청이 완료되었습니다</div>
+    <button class="popup-btn" onclick="closePopup()" style="padding:8px 18px; background:#a5dfc4; border:none; border-radius:8px; font-weight:bold; color:#174d3f; cursor:pointer;">확인</button>
+  </div>
+</div>
+<!-- 📨 쪽지 모달 추가: 받은쪽지/보내기 탭 -->
+<div class="modal" id="messageModal">
+  <div class="modal-content" style="width: 500px; max-height: 90vh; overflow-y: auto;">
+    <h2 style="text-align:center; margin-top:0;">📨 쪽지함</h2>
+    <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
+      <button onclick="showTab('inboxTab')" class="logout-button" style="background:#ffe0b2;">📬 받은 쪽지함</button>
+      <button onclick="showTab('sendTab')" class="logout-button" style="background:#ffe0b2;">📩 새 쪽지 보내기</button>
+    </div>
+
+    <!-- 받은 쪽지함 -->
+    <div id="inboxTab" class="tab-content">
+      {% if messages %}
+        {% for msg in messages %}
+          <div style="border:1px solid #ddd; border-radius:8px; padding:10px; margin-bottom:10px;">
+            <b>보낸 사람:</b> {{ msg[0] }}<br>
+            <b>내용:</b> {{ msg[1] }}<br>
+            <small style="color:#888;">{{ msg[2] }}</small>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p>📭 받은 쪽지가 없습니다.</p>
+      {% endif %}
+    </div>
+
+<div id="sendTab" class="tab-content" style="display:none;">
+  <form method="POST" action="{{ url_for('send_message') }}">
+    <label>받는 사람</label><br>
+<select name="recipient" required style="width:100%; padding:8px; border-radius:6px; margin-bottom:14px;">
+  <option value="" disabled selected>받는 사람을 선택하세요</option>
+  {% set added_admin = false %}
+  {% for user in recipients %}
+    {% if user[0] == 'admin' and not added_admin %}
+      <option value="{{ user[0] }}">📢 관리자</option>
+      {% set added_admin = true %}
+    {% else %}
+      <option value="{{ user[0] }}">{{ user[1] }}</option>
+    {% endif %}
+  {% endfor %}
+</select>
+
+    <label>쪽지 내용</label><br>
+    <textarea name="content" rows="5" maxlength="300" required style="width:100%; border-radius:8px; padding:10px;"></textarea><br><br>
+
+    <button type="submit" class="logout-button" style="background:#ffcc80;">보내기</button>
+  </form>
+</div>
+
+    <div style="text-align:right; margin-top:20px;">
+      <button onclick="closeMessageModal()" class="logout-button">닫기</button>
+    </div>
+  </div>
+</div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      const timeStr = now.toLocaleTimeString('ko-KR', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      const clock = document.getElementById("clock");
+      clock.textContent = `${dateStr} ${timeStr}`;
+      clock.classList.add("blink");
+      setTimeout(() => clock.classList.remove("blink"), 200);
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+    function openModal(id, name, price, qty, img) {
+      document.getElementById("modalItemName").textContent = name;
+      document.getElementById("modalItemPrice").textContent = parseInt(price);
+      document.getElementById("modalItemQty").textContent = qty;
+      document.getElementById("modalItemId").value = id;
+      document.getElementById("modalItemImg").src = img;
+      document.getElementById("modalQuantity").value = 1;
+      document.getElementById("requestModal").style.display = "flex";
+    }
+    function closeModal() {
+      document.getElementById("requestModal").style.display = "none";
+    }
+    function openImageZoom() {
+      const src = document.getElementById("modalItemImg").src;
+      document.getElementById("zoomedImage").src = src;
+      document.getElementById("zoomModal").style.display = "flex";
+    }
+    function closeImageZoom() {
+      document.getElementById("zoomModal").style.display = "none";
+    }
+function submitRequestDirect(itemId) {
+  const quantityInput = document.getElementById(`quantity-${itemId}`);
+  const quantity = quantityInput.value;
+
+  fetch("{{ url_for('user_request_ajax') }}", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ item_id: itemId, quantity: quantity })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      showAlertModal("✅ 신청이 완료되었습니다!");
+    } else {
+      showAlertModal("❌ 신청 실패: " + data.message);
+    }
+  })
+  .catch(err => showAlertModal("에러 발생: " + err));
+}
+
+function showAlertModal(message) {
+  document.getElementById("alertMessage").textContent = message;
+  document.getElementById("alertModal").style.display = "flex";
+}
+
+function closeAlertModal() {
+  document.getElementById("alertModal").style.display = "none";
+}
+  function zoomImage(imgSrc) {
+    document.getElementById("zoomedImage").src = imgSrc;
+    document.getElementById("zoomModal").style.display = "flex";
+  }
+  function closeZoomModal() {
+    document.getElementById("zoomModal").style.display = "none";
+  }
+function zoomImage(src) {
+  const modal = document.createElement('div');
+  modal.style.position = 'fixed';
+  modal.style.top = 0;
+  modal.style.left = 0;
+  modal.style.width = '100vw';
+  modal.style.height = '100vh';
+  modal.style.background = 'rgba(0,0,0,0.5)';
+  modal.style.display = 'flex';
+  modal.style.alignItems = 'center';
+  modal.style.justifyContent = 'center';
+  modal.style.zIndex = 9999;
+  modal.onclick = () => modal.remove();
+
+  const img = document.createElement('img');
+  img.src = src;
+  img.style.maxWidth = '90%';
+  img.style.maxHeight = '90%';
+  img.style.borderRadius = '16px';
+  img.style.boxShadow = '0 0 20px rgba(0,0,0,0.25)';
+
+  modal.appendChild(img);
+  document.body.appendChild(modal);
+}
+  setInterval(() => {
+    const now = new Date();
+    const formatted = now.getFullYear() + '. ' + String(now.getMonth()+1).padStart(2, '0') + '. ' + String(now.getDate()).padStart(2, '0') + '. ' +
+      String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
+    document.getElementById('clock').textContent = formatted;
+  }, 1000);
+function zoomImage(url) {
+  const modal = document.createElement("div");
+  modal.id = "img-zoom-modal";
+  modal.style.position = "fixed";
+  modal.style.top = 0;
+  modal.style.left = 0;
+  modal.style.width = "100vw";
+  modal.style.height = "100vh";
+  modal.style.background = "rgba(0, 0, 0, 0.6)";
+  modal.style.display = "flex";
+  modal.style.justifyContent = "center";
+  modal.style.alignItems = "center";
+  modal.style.zIndex = 9999;
+  modal.onclick = function(e) {
+    if (e.target === modal) document.body.removeChild(modal);
+  };
+  const img = document.createElement("img");
+  img.src = url;
+  img.style.maxWidth = "90%";
+  img.style.maxHeight = "90%";
+  img.style.borderRadius = "16px";
+  modal.appendChild(img);
+  document.body.appendChild(modal);
+}
+function openMessageModal() {
+  document.getElementById('messageModal').style.display = 'flex';
+  showTab('inboxTab');
+}
+function closeMessageModal() {
+  document.getElementById('messageModal').style.display = 'none';
+}
+function showTab(tabId) {
+  document.getElementById('inboxTab').style.display = 'none';
+  document.getElementById('sendTab').style.display = 'none';
+  document.getElementById(tabId).style.display = 'block';
+}
+if (document.getElementById('messageButton')) {
+  document.getElementById('messageButton').addEventListener('click', openMessageModal);
+}
+function closePopup() {
+  document.getElementById("popup-modal").style.display = "none";
+  location.reload();
+}
+
+function showPopup(message, icon) {
+  document.getElementById("popup-msg").textContent = message;
+  document.getElementById("popup-emoji").textContent = icon || "🎉";
+  document.getElementById("popup-modal").style.display = "flex";
+}
+
+async function submitRequestDirect(itemId) {
+  const qtyInput = document.getElementById("quantity-" + itemId);
+  const quantity = parseInt(qtyInput.value, 10);
+
+  const res = await fetch("/user/request/ajax", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ item_id: itemId, quantity })
+  });
+
+  const result = await res.json();
+  if (result.success) {
+    showPopup("신청이 완료되었습니다!", "🎉");
+  } else {
+    showPopup(result.message || "신청 실패", "❗");
+  }
+}
+function updateClock() {
+  const now = new Date();
+  const formatted = now.getFullYear() + ". "
+    + String(now.getMonth() + 1).padStart(2, '0') + ". "
+    + String(now.getDate()).padStart(2, '0') + ". "
+    + String(now.getHours()).padStart(2, '0') + ":"
+    + String(now.getMinutes()).padStart(2, '0') + ":"
+    + String(now.getSeconds()).padStart(2, '0');
+  document.getElementById("clock").textContent = formatted;
+}
+setInterval(updateClock, 1000);
+updateClock();
+// 쪽지함 버튼 자동 생성 + 간격 반영
+
+document.addEventListener('DOMContentLoaded', function() {
+  const messageButton = document.createElement('button');
+  messageButton.innerHTML = '📬 쪽지함';
+  messageButton.className = 'logout-button';
+  messageButton.style.backgroundColor = '#ffcc80';
+  messageButton.style.fontWeight = 'bold';
+  messageButton.style.marginTop = '6px'; // 어서오세요 ↔ 쪽지함 간 간격 추가
+  messageButton.onclick = openMessageModal;
+
+  const target = document.querySelector('.user-info-box > div');
+  target.insertBefore(messageButton, target.children[1]);
+});
+</script>
+</body>
+</html>

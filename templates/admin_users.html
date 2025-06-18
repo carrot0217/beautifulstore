@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>👤 사용자 관리</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background-color: #fffaf3;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 40px;
+    }
+    h1 { color: #5d4037; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    form {
+      margin-top: 20px;
+      display: inline-block;
+    }
+    input, button, select {
+      padding: 8px;
+      margin: 4px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #ffcc80;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    th a {
+      color: #5d4037;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    th a:hover {
+      text-decoration: underline;
+    }
+    strong {
+      color: #ef6c00;
+    }
+    .disabled {
+      color: #aaa;
+    }
+    .action-btn {
+      margin: 0 2px;
+    }
+    .alert {
+      background-color: #ffe0b2;
+      color: #4e342e;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-weight: bold;
+      box-shadow: 0 2px 8px #ffecb3;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ✅ 이전 화면 버튼 -->
+  <div style="margin-bottom: 18px; text-align: left;">
+    <a href="{{ url_for('dashboard') }}" style="
+        background-color: #ffd180;
+        color: #4e342e;
+        text-decoration: none;
+        padding: 10px 18px;
+        border-radius: 12px;
+        font-weight: bold;
+        box-shadow: 0 2px 6px #ffecb3;
+        display: inline-block;">
+      ⬅️ 이전 화면
+    </a>
+  </div>
+
+  <h1>👤 사용자 관리</h1>
+
+  <!-- ✅ 알림 메시지 -->
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="alert">
+        {% for message in messages %}{{ message }}{% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- 🔍 검색 필터 -->
+  <form method="GET" action="{{ url_for('manage_users') }}" style="margin-bottom:10px;">
+    <input type="text" name="keyword" placeholder="사용자/매장 검색" value="{{ keyword or '' }}">
+    <button type="submit">검색</button>
+  </form>
+
+  <!-- 👤 사용자 등록 폼 -->
+  <form method="POST" style="margin-bottom:10px;">
+    <input type="text" name="username" placeholder="사용자 아이디" required>
+    <input type="password" name="password" placeholder="비밀번호" required>
+    <input type="text" name="store" placeholder="매장명" required>
+    <label><input type="checkbox" name="is_admin"> 관리자 권한</label>
+    <button type="submit">등록</button>
+  </form>
+
+  <h2>📋 사용자 목록</h2>
+  <table>
+    <tr>
+      <th>아이디</th>
+      <th>매장</th>
+      <th>관리자 여부</th>
+      <th>변경/삭제</th>
+    </tr>
+    {% for user in users %}
+    <tr>
+      <td>{{ user[1] }}</td>
+      <td>
+        <form method="POST" action="{{ url_for('edit_user_store', user_id=user[0]) }}" style="display:inline;">
+          <input type="text" name="store_name" value="{{ user[3] or '' }}" style="width: 110px;" required>
+          <button type="submit" class="action-btn">수정</button>
+        </form>
+      </td>
+      <td>{% if user[2] %}✔️{% else %}❌{% endif %}</td>
+      <td>
+        {% if user[1] != 'admin' %}
+        <!-- 권한 변경 버튼 -->
+        <form method="POST" action="{{ url_for('toggle_admin', user_id=user[0]) }}" style="display:inline;">
+          <button type="submit" class="action-btn">
+            {% if user[2] %}권한 해제{% else %}권한 부여{% endif %}
+          </button>
+        </form>
+        <!-- 삭제 버튼 -->
+        <form method="POST" action="{{ url_for('delete_user', user_id=user[0]) }}" style="display:inline;">
+          <button type="submit" class="action-btn" onclick="return confirm('정말 삭제하시겠습니까?');">삭제</button>
+        </form>
+        {% else %}
+        <span class="disabled">(변경 불가)</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>
+

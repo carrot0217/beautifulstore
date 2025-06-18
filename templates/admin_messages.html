@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>📨 전체 쪽지 관리</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background-color: #fffaf3;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      font-size: 2em;
+      color: #5a4031;
+      margin-bottom: 20px;
+    }
+
+    .delete-all-btn {
+      background-color: #ff8a65;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    .delete-all-btn:hover {
+      background-color: #ff7043;
+    }
+
+    .msg-table {
+      margin: auto;
+      border-collapse: collapse;
+      width: 95%;
+    }
+    .msg-table th, .msg-table td {
+      border: 1px solid #e0c9b2;
+      padding: 10px;
+    }
+    .msg-table th {
+      background-color: #ffe0b2;
+      color: #4e342e;
+    }
+    .msg-table td {
+      background-color: #fff8e1;
+    }
+
+    .delete-btn {
+      background-color: #ef5350;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .delete-btn:hover {
+      background-color: #e53935;
+    }
+
+    .no-msg {
+      margin-top: 40px;
+      font-size: 1.2em;
+      color: #888;
+    }
+
+    .flash-msg {
+      color: red;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>📨 전체 쪽지 관리</h1>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="flash-msg">{{ messages[0] }}</div>
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST" action="{{ url_for('delete_all_messages') }}"
+        onsubmit="return confirm('⚠️ 모든 쪽지를 정말 삭제하시겠습니까?')">
+    <button type="submit" class="delete-all-btn">🗑️ 전체 삭제</button>
+  </form>
+
+  {% if messages_list %}
+    <table class="msg-table">
+      <thead>
+        <tr>
+          <th>보낸 사람</th>
+          <th>받는 사람</th>
+          <th>내용</th>
+          <th>보낸 시간</th>
+          <th>삭제</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for msg in messages_list %}
+        <tr id="msg-{{ msg.id }}">
+          <td>{{ msg.sender }}</td>
+          <td>{{ msg.receiver }}</td>
+          <td>{{ msg.content }}</td>
+          <td>{{ msg.timestamp }}</td>
+          <td>
+            <button class="delete-btn" onclick="deleteMessage({{ msg.id }})">삭제</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="no-msg">📭 쪽지가 없습니다.</div>
+  {% endif %}
+
+  <script>
+    function deleteMessage(msgId) {
+      if (!confirm("이 쪽지를 삭제하시겠습니까?")) return;
+
+      fetch('/messages/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: msgId })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message);
+        if (data.success) {
+          const row = document.getElementById(`msg-${msgId}`);
+          if (row) row.remove();
+        }
+      });
+    }
+  </script>
+</body>
+</html>
