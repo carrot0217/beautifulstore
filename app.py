@@ -201,50 +201,50 @@ def edit_item(item_id):
         return redirect(url_for('login'))
 
     # 폼 데이터 받기
-    name = request.form['name']
-    category = request.form['category']
+    name = request.form.get('name')
+    category = request.form.get('category') or request.form.get('custom-category') or ''
     description = request.form.get('description', '')
-    stock = request.form['stock']
-    unit_price = request.form['unit_price']
-    max_request = request.form['max_request']
+    stock = int(request.form.get('stock', 0))
+    unit_price = float(request.form.get('unit_price', 0))
+    max_request = request.form.get('max_request')
+    max_request = int(max_request) if max_request else None
 
     # 이미지 처리
     image = request.files.get('image')
     image_filename = None
 
     if image and image.filename:
-        filename = secure_filename(image.filename)
-        image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        ext = os.path.splitext(image.filename)[1]
+        unique_filename = f"{uuid.uuid4().hex}{ext}"
+        image_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
         image.save(image_path)
-        image_filename = filename
+        image_filename = unique_filename
 
     # DB 연결
     conn = get_connection()
     cur = conn.cursor()
 
-    # 이미지가 있을 경우만 포함
     if image_filename:
-        query = """
+        cur.execute("""
             UPDATE items
-            SET name = %s, description = %s, stock = %s,
+            SET name = %s, description = %s, quantity = %s,
                 unit_price = %s, category = %s, image = %s, max_request = %s
             WHERE id = %s
-        """
-        cur.execute(query, (name, description, stock, unit_price, category, image_filename, max_request, item_id))
+        """, (name, description, stock, unit_price, category, image_filename, max_request, item_id))
     else:
-        query = """
+        cur.execute("""
             UPDATE items
-            SET name = %s, description = %s, stock = %s,
+            SET name = %s, description = %s, quantity = %s,
                 unit_price = %s, category = %s, max_request = %s
             WHERE id = %s
-        """
-        cur.execute(query, (name, description, stock, unit_price, category, max_request, item_id))
+        """, (name, description, stock, unit_price, category, max_request, item_id))
 
     conn.commit()
     cur.close()
     conn.close()
 
     return redirect(url_for('manage_items', message='updated'))
+
 
 
 @app.route('/admin/items/delete/<int:item_id>', methods=['POST'])
