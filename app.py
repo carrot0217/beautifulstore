@@ -244,7 +244,7 @@ def edit_item(item_id):
     cur.close()
     conn.close()
 
-    return redirect(url_for('admin_items', message='updated'))
+    return redirect(url_for('manage_items', message='updated'))
 
 
 @app.route('/admin/items/delete/<int:item_id>', methods=['POST'])
