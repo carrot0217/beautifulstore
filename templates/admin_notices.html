@@ -41,6 +41,25 @@
       border-radius: 10px;
       margin-bottom: 12px;
       box-shadow: 0 2px 6px #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .notice-info {
+      flex-grow: 1;
+    }
+    .notice-img {
+      margin-top: 8px;
+    }
+    .delete-form {
+      margin-left: 20px;
+    }
+    .delete-form button {
+      background-color: #e57373;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.9em;
     }
   </style>
 </head>
@@ -62,11 +81,17 @@
   <h2>📄 최근 공지사항</h2>
   {% for notice in notices %}
   <div class="notice-card">
-    <strong>{{ notice[1] }}</strong> <small>{{ notice[3].strftime('%Y-%m-%d') }}</small><br>
-    {% if notice[2] %}
-      <img src="{{ url_for('static', filename='uploads/' + notice[2]) }}" style="width:120px; margin-top:8px;">
-    {% endif %}
+    <div class="notice-info">
+      <strong>{{ notice[1] }}</strong> <small>{{ notice[3].strftime('%Y-%m-%d') }}</small><br>
+      {% if notice[2] %}
+        <img class="notice-img" src="{{ url_for('static', filename='uploads/' + notice[2]) }}" style="width:120px;">
+      {% endif %}
+    </div>
+    <form method="POST" action="{{ url_for('delete_notice', notice_id=notice[0]) }}" class="delete-form" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+      <button type="submit">삭제</button>
+    </form>
   </div>
   {% endfor %}
 </body>
 </html>
+

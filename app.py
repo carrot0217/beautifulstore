@@ -1667,6 +1667,21 @@ def admin_notices():
 
     return render_template("admin_notices.html", notices=notices)
 
+# ----------------------- 공지사항 삭제  라우트 ----------------
+@app.route('/admin/notices/delete/<int:notice_id>', methods=['POST'])
+def delete_notice(notice_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('login'))
+
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM notices WHERE id = %s", (notice_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    flash("✅ 공지사항이 삭제되었습니다.")
+    return redirect(url_for('admin_notices'))
 
 # ----------------------- 서버 실행 -----------------------
 if __name__ == '__main__':
