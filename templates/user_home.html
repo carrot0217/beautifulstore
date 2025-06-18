@@ -423,41 +423,55 @@
     </div>
   </div>
 
-  <!-- 우: 입고 일정(상), 주문 이력(하) -->
-  <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
-    <div class="section">
-      <h2>📦 입고 일정
-        <a href="{{ url_for('user_schedule') }}">
-          <button class="btn-see-all">전체 보기</button>
-        </a>
-      </h2>
-      <div>
+      <!-- ✅ 공지사항 영역 좌측 하단으로 이동 -->
+      <div class="notice-board">
+        <h3>📢 공지사항</h3>
+        <div style="display:flex; gap:16px;">
+          {% for notice in notices[:3] %}
+          <div onclick="showNotice('{{ notice[0] }}')" class="notice-entry">
+            {% if notice[2] %}
+            <img src="{{ url_for('static', filename='uploads/' + notice[2]) }}">
+            {% endif %}
+            <p style="margin:8px 0 0; font-weight:bold;">{{ notice[1] }}</p>
+            <small>{{ notice[3].strftime('%Y-%m-%d') }}</small>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="right-panel">
+      <div class="section">
+        <h2>📦 입고 일정
+          <a href="{{ url_for('user_schedule') }}">
+            <button class="btn-see-all">전체 보기</button>
+          </a>
+        </h2>
         {% for s in schedule %}
         <div>{{ s.delivery_date }} | {{ s.name }} | {{ s.quantity }}개 | 배송중 🚚</div>
         {% else %}
         <div>📬 예정된 입고 일정이 없습니다.</div>
         {% endfor %}
       </div>
-    </div>
-    <div class="section">
-      <h2>📁 주문 이력
-        <a href="{{ url_for('user_orders') }}">
-          <button class="btn-see-all">+ 더보기</button>
-        </a>
-      </h2>
-      {% for order in recent_orders %}
-      <div class="order-history-entry">
-        {{ order.order_date }} | {{ order.name }} {{ order.quantity }}개
+      <div class="section">
+        <h2>📁 주문 이력
+          <a href="{{ url_for('user_orders') }}">
+            <button class="btn-see-all">+ 더보기</button>
+          </a>
+        </h2>
+        {% for order in recent_orders %}
+        <div class="order-history-entry">
+          {{ order.order_date }} | {{ order.name }} {{ order.quantity }}개
+        </div>
+        {% else %}
+        <div class="order-history-entry">주문 내역이 없습니다.</div>
+        {% endfor %}
       </div>
-      {% else %}
-      <div class="order-history-entry">주문 내역이 없습니다.</div>
-      {% endfor %}
-    </div>
-    <div class="footer" style="margin-top: 10px; text-align: right; font-size: 0.95em; color: #6b4b27; padding-right: 10px;">
-      릴라스테이션 ©2025 Created by carrot0217
+      <div class="footer">
+        아름다운가게 ©2025 Created by carrot0217
+      </div>
     </div>
   </div>
-</div>
   <div class="modal" id="requestModal">
     <div class="modal-content">
       <h3 id="modalItemName">상품명</h3>
