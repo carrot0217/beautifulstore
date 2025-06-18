@@ -551,21 +551,6 @@
     </div>
   </div>
 </div>
-<div style="background:#fffaf3; border-radius:12px; padding:18px; box-shadow:0 2px 8px #eee; margin-top:20px;">
-  <h3 style="margin-bottom:12px; font-weight:bold;">📢 공지사항</h3>
-  <div style="display:flex; gap:16px;">
-    {% for notice in notices[:3] %}
-    <div onclick="showNotice('{{ notice[0] }}')" style="cursor:pointer; background:white; border-radius:10px; padding:10px; width:30%; box-shadow:0 1px 6px #ddd;">
-      {% if notice[2] %}
-        <img src="{{ url_for('static', filename='uploads/' + notice[2]) }}" style="width:100%; height:100px; object-fit:cover; border-radius:6px;">
-      {% endif %}
-      <p style="margin:8px 0 0; font-weight:bold;">{{ notice[1] }}</p>
-      <small>{{ notice[3].strftime('%Y-%m-%d') }}</small>
-    </div>
-    {% endfor %}
-  </div>
-</div>
-
   <script>
     function updateClock() {
       const now = new Date();
