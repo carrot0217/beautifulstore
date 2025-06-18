@@ -119,28 +119,49 @@
       <th>저장</th>
       <th>삭제</th>
     </tr>
-    {% for item in items %}
-    <tr>
-      <form method="POST">
-        <td><input type="text" name="name" value="{{ item[1] }}" required></td>
-        <td><input type="text" name="category" value="{{ item[5] or '' }}" required></td>
-        <td><input type="text" name="description" value="{{ item[2] }}"></td>
-        <td><input type="number" name="stock" value="{{ item[3] }}" required></td>
-        <td><div class="price-input-wrapper"><input type="number" name="unit_price" value="{{ item[4]|int }}" required><span>원</span></div></td>
-        <td><input type="number" name="max_request" value="{{ item[7] or 0 }}" required></td>
-        <td>
-          {% if item[6] %}
-          <div style="position:relative; display:inline-block;">
-            <img src="{{ url_for('static', filename='uploads/' + item[6]|string) }}" class="thumbnail" onerror="this.style.display='none'">
-            <span class="zoom-icon" onclick="openPopup('{{ url_for('static', filename='uploads/' + item[6]|string) }}')">🔍</span>
-          </div>
-          {% else %}-{% endif %}
-        </td>
-        <td><button type="submit" class="btn-edit" formaction="/admin/items/edit/{{ item[0] }}"><span class="btn-emoji">💾</span><span class="btn-label">수정</span></button></td>
-        <td><button type="submit" class="btn-delete" formaction="/admin/items/delete/{{ item[0] }}" onclick="return confirm('정말 삭제하시겠습니까?');"><span class="btn-emoji">❌</span><span class="btn-label">삭제</span></button></td>
-      </form>
-    </tr>
-    {% endfor %}
+{% for item in items %}
+<tr>
+  <form method="POST" enctype="multipart/form-data">
+    <td><input type="text" name="name" value="{{ item[1] }}" required></td>
+    <td><input type="text" name="category" value="{{ item[5] or '' }}" required></td>
+    <td><input type="text" name="description" value="{{ item[2] }}"></td>
+    <td><input type="number" name="stock" value="{{ item[3] }}" required></td>
+    <td>
+      <div class="price-input-wrapper">
+        <input type="number" name="unit_price" value="{{ item[4]|int }}" required>
+        <span>원</span>
+      </div>
+    </td>
+    <td><input type="number" name="max_request" value="{{ item[7] or 0 }}" required></td>
+    <td>
+      {% if item[6] %}
+      <div style="position: relative; display: inline-block;">
+        <img src="{{ url_for('static', filename='uploads/' + item[6]|string) }}" class="thumbnail" onerror="this.style.display='none'">
+        <span class="zoom-icon" onclick="openPopup('{{ url_for('static', filename='uploads/' + item[6]|string) }}')">🔍</span>
+      </div>
+      {% else %}
+      -
+      {% endif %}
+      <div style="margin-top: 6px;">
+        <input type="file" name="image" accept="image/*">
+        <small style="font-size: 0.8em; color: #666;">※ 새 이미지 선택 시 기존 이미지가 변경됩니다.</small>
+      </div>
+    </td>
+    <td>
+      <button type="submit" class="btn-edit" formaction="/admin/items/edit/{{ item[0] }}">
+        <span class="btn-emoji">💾</span><span class="btn-label">수정</span>
+      </button>
+    </td>
+    <td>
+      <button type="submit" class="btn-delete" formaction="/admin/items/delete/{{ item[0] }}" onclick="return confirm('정말 삭제하시겠습니까?');">
+        <span class="btn-emoji">❌</span><span class="btn-label">삭제</span>
+      </button>
+    </td>
+  </form>
+</tr>
+{% endfor %}
+
+
   </table>
 
   <div id="customModal">
