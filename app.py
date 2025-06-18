@@ -808,7 +808,7 @@ def user_home():
         WHERE username != %s AND store_name IS NOT NULL AND store_name != ''
         ORDER BY is_admin DESC, store_name ASC
     """, (username,))
-    recipients = cur.fetchall()  # [(username, store_name, is_admin), ...]
+    recipients = cur.fetchall()
 
     # 🔹 받은 쪽지 목록
     cur.execute("""
@@ -877,6 +877,15 @@ def user_home():
         for row in cur.fetchall()
     ]
 
+    # 🔹 공지사항 3개 가져오기
+    cur.execute("""
+        SELECT id, title, image, created_at
+        FROM notices
+        ORDER BY created_at DESC
+        LIMIT 3
+    """)
+    notices = cur.fetchall()
+
     cur.close()
     conn.close()
 
@@ -887,8 +896,9 @@ def user_home():
         items=items,
         schedule=schedule,
         recent_orders=recent_orders,
-        recipients=recipients,   # ✅ 관리자 포함 모든 사용자 전달
-        messages=messages
+        recipients=recipients,
+        messages=messages,
+        notices=notices  # ✅ 추가된 notices 변수
     )
 # ----------------------- 관리자페이지 매장 수정라우트 ----------------------
 @app.route('/admin/users/<int:user_id>/edit_store', methods=['POST'])
