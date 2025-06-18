@@ -1623,6 +1623,39 @@ def item_stock_chart():
     values = [row[1] for row in results]
 
     return render_template('items_chart.html', labels=labels, values=values)
+# ----------------------- 공지 게시판 -----------------------
+@app.route('/admin/notices', methods=['GET', 'POST'])
+def admin_notices():
+    if not session.get('is_admin'):
+        return redirect(url_for('login'))
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    if request.method == 'POST':
+        title = request.form.get('title')
+        content = request.form.get('content')
+        image_file = request.files.get('image')
+        image_filename = None
+
+        if image_file and image_file.filename:
+            ext = os.path.splitext(image_file.filename)[1]
+            image_filename = f"{uuid.uuid4().hex}{ext}"
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
+            image_file.save(image_path)
+
+        cur.execute("""
+            INSERT INTO notices (title, content, image)
+            VALUES (%s, %s, %s)
+        """, (title, content, image_filename))
+
+        conn.commit()
+
+    cur.execute("SELECT id, title, image, created_at FROM notices ORDER BY created_at DESC LIMIT 10")
+    notices = cur.fetchall()
+    cur.close(); conn.close()
+
+    return render_template("admin_notices.html", notices=notices)
 
 
 # ----------------------- 서버 실행 -----------------------
