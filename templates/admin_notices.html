@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>공지사항 관리</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #fffaf3;
+      padding: 40px;
+    }
+    h1 {
+      color: #5a4031;
+    }
+    form {
+      margin-bottom: 30px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      margin-bottom: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      background-color: #ffcc80;
+      border: none;
+      padding: 10px 20px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .notice-card {
+      background: white;
+      padding: 16px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 6px #ddd;
+    }
+  </style>
+</head>
+<body>
+  <h1>📢 공지사항 등록</h1>
+  <form method="POST" enctype="multipart/form-data">
+    <label>제목</label>
+    <input type="text" name="title" required>
+
+    <label>내용</label>
+    <textarea name="content" rows="5"></textarea>
+
+    <label>이미지 (선택)</label>
+    <input type="file" name="image">
+
+    <button type="submit">등록</button>
+  </form>
+
+  <h2>📄 최근 공지사항</h2>
+  {% for notice in notices %}
+  <div class="notice-card">
+    <strong>{{ notice[1] }}</strong> <small>{{ notice[3].strftime('%Y-%m-%d') }}</small><br>
+    {% if notice[2] %}
+      <img src="{{ url_for('static', filename='uploads/' + notice[2]) }}" style="width:120px; margin-top:8px;">
+    {% endif %}
+  </div>
+  {% endfor %}
+</body>
+</html>
