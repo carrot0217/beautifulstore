@@ -95,10 +95,23 @@
       color: #888;
       margin-top: 30px;
     }
+    .logout-button {
+      background-color: #fff3e0;
+      color: #5a4031;
+      font-weight: bold;
+      padding: 6px 12px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: background 0.2s;
+    }
+    .logout-button:hover {
+      background-color: #ffe0b2;
+    }
   </style>
 </head>
 <body>
-
 <div class="top-bar">
   <div class="logo">아름다운가게</div>
   <div class="user-info-box">
@@ -111,7 +124,6 @@
     </div>
   </div>
 </div>
-
 <div class="content">
   <div class="left-panel">
     <div class="section">
@@ -137,11 +149,11 @@
         {% endfor %}
       </div>
     </div>
-
-      <!-- ✅ 공지사항 영역 좌측 하단으로 이동 -->
     <div class="section">
       <h2>🐻 비품 요청/접수
-        <button onclick="location.href='/user/equipments'" class="btn-see-all">+ 더보기</button>
+        <a href="/user/equipments">
+          <button class="btn-see-all">+ 더보기</button>
+        </a>
       </h2>
       <div style="display: flex; flex-wrap: wrap; gap: 18px;">
         {% for e in equipments[:4] %}
@@ -159,8 +171,6 @@
         {% endfor %}
       </div>
     </div>
-
-    <!-- ✅ 공지사항 -->
     <div class="section">
       <h2>📢 공지사항</h2>
       <div style="display:flex; gap:16px; flex-wrap: wrap;">
@@ -175,22 +185,6 @@
         {% endfor %}
       </div>
     </div>
-  </div>
-
-<script>
-function submitEquipmentRequest(equipmentId) {
-  const qty = document.getElementById('quantity_' + equipmentId).value;
-  fetch('/user/equipment/request', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `equipment_id=${equipmentId}&quantity=${qty}`
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) alert('신청이 완료되었습니다!');
-    else alert(data.message);
-  });
-}
   </div>
   <div class="right-panel">
     <div class="section">
@@ -222,283 +216,41 @@ function submitEquipmentRequest(equipmentId) {
     <div class="footer">릴라스테이션 ©2025 Created by carrot0217</div>
   </div>
 </div>
-  <div class="modal" id="requestModal">
-    <div class="modal-content">
-      <h3 id="modalItemName">상품명</h3>
-      <div class="image-container">
-        <img id="modalItemImg" src="" alt="" class="item-image">
-        <button class="zoom-button" onclick="openImageZoom()">🔍</button>
-      </div>
-      <p>가격: <span id="modalItemPrice"></span>원</p>
-      <p>재고 수량: <span id="modalItemQty"></span>개</p>
-      <label for="modalQuantity">신청 수량</label><br>
-      <input type="number" id="modalQuantity" min="1" value="1">
-      <br><br>
-      <button onclick="submitModalRequest()" class="apply-btn">신청</button>
-      <button onclick="closeModal()" class="close-btn">닫기</button>
-      <input type="hidden" id="modalItemId">
-    </div>
-  </div>
- <div class="modal" id="zoomModal" onclick="closeZoomModal()">
-  <img id="zoomedImage" class="zoomed-img" src="" alt="확대 이미지">
-</div>
-<div id="popup-modal" class="popup-modal" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
-  <div class="popup-box" style="background:white; padding:24px 36px; border-radius:20px; text-align:center; box-shadow:0 0 20px rgba(0,0,0,0.2);">
-    <div class="popup-icon" id="popup-emoji" style="font-size:2rem; margin-bottom:10px;">🎉</div>
-    <div class="popup-title" id="popup-msg" style="font-size:1.1rem; margin-bottom:16px;">신청이 완료되었습니다</div>
-    <button class="popup-btn" onclick="closePopup()" style="padding:8px 18px; background:#a5dfc4; border:none; border-radius:8px; font-weight:bold; color:#174d3f; cursor:pointer;">확인</button>
-  </div>
-</div>
-<!-- 📨 쪽지 모달 추가: 받은쪽지/보내기 탭 -->
-<div class="modal" id="messageModal">
-  <div class="modal-content" style="width: 500px; max-height: 90vh; overflow-y: auto;">
-    <h2 style="text-align:center; margin-top:0;">📨 쪽지함</h2>
-    <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
-      <button onclick="showTab('inboxTab')" class="logout-button" style="background:#ffe0b2;">📬 받은 쪽지함</button>
-      <button onclick="showTab('sendTab')" class="logout-button" style="background:#ffe0b2;">📩 새 쪽지 보내기</button>
-    </div>
-
-    <!-- 받은 쪽지함 -->
-    <div id="inboxTab" class="tab-content">
-      {% if messages %}
-        {% for msg in messages %}
-          <div style="border:1px solid #ddd; border-radius:8px; padding:10px; margin-bottom:10px;">
-            <b>보낸 사람:</b> {{ msg[0] }}<br>
-            <b>내용:</b> {{ msg[1] }}<br>
-            <small style="color:#888;">{{ msg[2] }}</small>
-          </div>
-        {% endfor %}
-      {% else %}
-        <p>📭 받은 쪽지가 없습니다.</p>
-      {% endif %}
-    </div>
-
-<div id="sendTab" class="tab-content" style="display:none;">
-  <form method="POST" action="{{ url_for('send_message') }}">
-    <label>받는 사람</label><br>
-<select name="recipient" required style="width:100%; padding:8px; border-radius:6px; margin-bottom:14px;">
-  <option value="" disabled selected>받는 사람을 선택하세요</option>
-  {% set added_admin = false %}
-  {% for user in recipients %}
-    {% if user[0] == 'admin' and not added_admin %}
-      <option value="{{ user[0] }}">📢 관리자</option>
-      {% set added_admin = true %}
-    {% else %}
-      <option value="{{ user[0] }}">{{ user[1] }}</option>
-    {% endif %}
-  {% endfor %}
-</select>
-
-    <label>쪽지 내용</label><br>
-    <textarea name="content" rows="5" maxlength="300" required style="width:100%; border-radius:8px; padding:10px;"></textarea><br><br>
-
-    <button type="submit" class="logout-button" style="background:#ffcc80;">보내기</button>
-  </form>
-</div>
-
-    <div style="text-align:right; margin-top:20px;">
-      <button onclick="closeMessageModal()" class="logout-button">닫기</button>
-    </div>
-  </div>
-</div>
-  <script>
-    function updateClock() {
-      const now = new Date();
-      const dateStr = now.toLocaleDateString('ko-KR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      });
-      const timeStr = now.toLocaleTimeString('ko-KR', {
-        hour12: false,
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-      const clock = document.getElementById("clock");
-      clock.textContent = `${dateStr} ${timeStr}`;
-      clock.classList.add("blink");
-      setTimeout(() => clock.classList.remove("blink"), 200);
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-    function openModal(id, name, price, qty, img) {
-      document.getElementById("modalItemName").textContent = name;
-      document.getElementById("modalItemPrice").textContent = parseInt(price);
-      document.getElementById("modalItemQty").textContent = qty;
-      document.getElementById("modalItemId").value = id;
-      document.getElementById("modalItemImg").src = img;
-      document.getElementById("modalQuantity").value = 1;
-      document.getElementById("requestModal").style.display = "flex";
-    }
-    function closeModal() {
-      document.getElementById("requestModal").style.display = "none";
-    }
-    function openImageZoom() {
-      const src = document.getElementById("modalItemImg").src;
-      document.getElementById("zoomedImage").src = src;
-      document.getElementById("zoomModal").style.display = "flex";
-    }
-    function closeImageZoom() {
-      document.getElementById("zoomModal").style.display = "none";
-    }
-function submitRequestDirect(itemId) {
-  const quantityInput = document.getElementById(`quantity-${itemId}`);
-  const quantity = quantityInput.value;
-
-  fetch("{{ url_for('user_request_ajax') }}", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ item_id: itemId, quantity: quantity })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      showAlertModal("✅ 신청이 완료되었습니다!");
-    } else {
-      showAlertModal("❌ 신청 실패: " + data.message);
-    }
-  })
-  .catch(err => showAlertModal("에러 발생: " + err));
-}
-
-function showAlertModal(message) {
-  document.getElementById("alertMessage").textContent = message;
-  document.getElementById("alertModal").style.display = "flex";
-}
-
-function closeAlertModal() {
-  document.getElementById("alertModal").style.display = "none";
-}
-  function zoomImage(imgSrc) {
-    document.getElementById("zoomedImage").src = imgSrc;
-    document.getElementById("zoomModal").style.display = "flex";
-  }
-  function closeZoomModal() {
-    document.getElementById("zoomModal").style.display = "none";
-  }
-function zoomImage(src) {
-  const modal = document.createElement('div');
-  modal.style.position = 'fixed';
-  modal.style.top = 0;
-  modal.style.left = 0;
-  modal.style.width = '100vw';
-  modal.style.height = '100vh';
-  modal.style.background = 'rgba(0,0,0,0.5)';
-  modal.style.display = 'flex';
-  modal.style.alignItems = 'center';
-  modal.style.justifyContent = 'center';
-  modal.style.zIndex = 9999;
-  modal.onclick = () => modal.remove();
-
-  const img = document.createElement('img');
-  img.src = src;
-  img.style.maxWidth = '90%';
-  img.style.maxHeight = '90%';
-  img.style.borderRadius = '16px';
-  img.style.boxShadow = '0 0 20px rgba(0,0,0,0.25)';
-
-  modal.appendChild(img);
-  document.body.appendChild(modal);
-}
-  setInterval(() => {
-    const now = new Date();
-    const formatted = now.getFullYear() + '. ' + String(now.getMonth()+1).padStart(2, '0') + '. ' + String(now.getDate()).padStart(2, '0') + '. ' +
-      String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
-    document.getElementById('clock').textContent = formatted;
-  }, 1000);
-function zoomImage(url) {
-  const modal = document.createElement("div");
-  modal.id = "img-zoom-modal";
-  modal.style.position = "fixed";
-  modal.style.top = 0;
-  modal.style.left = 0;
-  modal.style.width = "100vw";
-  modal.style.height = "100vh";
-  modal.style.background = "rgba(0, 0, 0, 0.6)";
-  modal.style.display = "flex";
-  modal.style.justifyContent = "center";
-  modal.style.alignItems = "center";
-  modal.style.zIndex = 9999;
-  modal.onclick = function(e) {
-    if (e.target === modal) document.body.removeChild(modal);
-  };
-  const img = document.createElement("img");
-  img.src = url;
-  img.style.maxWidth = "90%";
-  img.style.maxHeight = "90%";
-  img.style.borderRadius = "16px";
-  modal.appendChild(img);
-  document.body.appendChild(modal);
-}
-function openMessageModal() {
-  document.getElementById('messageModal').style.display = 'flex';
-  showTab('inboxTab');
-}
-function closeMessageModal() {
-  document.getElementById('messageModal').style.display = 'none';
-}
-function showTab(tabId) {
-  document.getElementById('inboxTab').style.display = 'none';
-  document.getElementById('sendTab').style.display = 'none';
-  document.getElementById(tabId).style.display = 'block';
-}
-if (document.getElementById('messageButton')) {
-  document.getElementById('messageButton').addEventListener('click', openMessageModal);
-}
-function closePopup() {
-  document.getElementById("popup-modal").style.display = "none";
-  location.reload();
-}
-
-function showPopup(message, icon) {
-  document.getElementById("popup-msg").textContent = message;
-  document.getElementById("popup-emoji").textContent = icon || "🎉";
-  document.getElementById("popup-modal").style.display = "flex";
-}
-
-async function submitRequestDirect(itemId) {
-  const qtyInput = document.getElementById("quantity-" + itemId);
-  const quantity = parseInt(qtyInput.value, 10);
-
-  const res = await fetch("/user/request/ajax", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ item_id: itemId, quantity })
-  });
-
-  const result = await res.json();
-  if (result.success) {
-    showPopup("신청이 완료되었습니다!", "🎉");
-  } else {
-    showPopup(result.message || "신청 실패", "❗");
-  }
-}
+<script>
 function updateClock() {
   const now = new Date();
-  const formatted = now.getFullYear() + ". "
-    + String(now.getMonth() + 1).padStart(2, '0') + ". "
-    + String(now.getDate()).padStart(2, '0') + ". "
-    + String(now.getHours()).padStart(2, '0') + ":"
-    + String(now.getMinutes()).padStart(2, '0') + ":"
-    + String(now.getSeconds()).padStart(2, '0');
-  document.getElementById("clock").textContent = formatted;
+  const dateStr = now.toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  const timeStr = now.toLocaleTimeString('ko-KR', {
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+  const clock = document.getElementById("clock");
+  clock.textContent = `${dateStr} ${timeStr}`;
+  clock.classList.add("blink");
+  setTimeout(() => clock.classList.remove("blink"), 200);
 }
 setInterval(updateClock, 1000);
 updateClock();
-// 쪽지함 버튼 자동 생성 + 간격 반영
 
-document.addEventListener('DOMContentLoaded', function() {
+// 쪽지 버튼 삽입 복구
+window.addEventListener('DOMContentLoaded', () => {
   const messageButton = document.createElement('button');
   messageButton.innerHTML = '📬 쪽지함';
   messageButton.className = 'logout-button';
   messageButton.style.backgroundColor = '#ffcc80';
   messageButton.style.fontWeight = 'bold';
-  messageButton.style.marginTop = '6px'; // 어서오세요 ↔ 쪽지함 간 간격 추가
-  messageButton.onclick = openMessageModal;
-
+  messageButton.style.marginTop = '6px';
+  messageButton.onclick = function () {
+    window.location.href = "/user/messages";
+  };
   const target = document.querySelector('.user-info-box > div');
-  target.insertBefore(messageButton, target.children[1]);
+  if (target) target.insertBefore(messageButton, target.children[1]);
 });
 </script>
 </body>
