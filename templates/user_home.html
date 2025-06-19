@@ -4,87 +4,101 @@
   <meta charset="UTF-8">
   <title>아름다운가게 홈</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      margin: 0; padding: 0;
       background-color: #fffaf3;
-      height: 100vh; overflow: hidden;
-      display: flex; flex-direction: column;
+      margin: 0;
+      padding: 0;
     }
     .top-bar {
-      background-color: #d88f30; color: white;
-      display: flex; justify-content: space-between;
-      align-items: flex-start; padding: 12px 24px;
+      background-color: #d88f30;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 12px 24px;
       position: relative;
     }
     .logo { font-size: 1.2em; font-weight: bold; }
     .user-info-box {
-      display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
     }
-    .user-name { font-size: 0.95em; font-weight: bold; color: white; }
+    .user-name {
+      font-size: 0.95em;
+      font-weight: bold;
+      color: white;
+    }
     .clock-box {
-      background-color: #fff3e0; color: #5a4031;
-      padding: 6px 14px; border-radius: 14px;
-      font-size: 1em; font-weight: bold;
+      background-color: #fff3e0;
+      color: #5a4031;
+      padding: 6px 14px;
+      border-radius: 14px;
+      font-size: 1em;
+      font-weight: bold;
       border: 1px solid #ffd54f;
-      transition: background-color 0.3s ease;
     }
-    .clock-box.blink { background-color: #ffe0b2; }
     .logout-button {
-      background-color: #ffd54f; border: none;
-      padding: 6px 10px; border-radius: 8px;
-      cursor: pointer; font-weight: bold;
+      background-color: #ffe082;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
     }
-    .content {
-      display: flex; flex: 1; padding: 20px 30px;
-      gap: 30px; overflow: hidden;
-    }
-    .left-panel, .right-panel {
-      flex: 1; overflow-y: auto; padding: 20px;
+    .container {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      padding: 30px;
     }
     .section {
-      background: white; border-radius: 16px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-      padding: 20px; margin-bottom: 30px;
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+    .section h2 {
+      font-size: 1.2em;
+      margin-bottom: 12px;
     }
     .card-grid {
-      display: flex; flex-wrap: wrap; gap: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 14px;
     }
-    .item-card {
-      width: 160px; background: #fff; border: 1px solid #eee;
-      border-radius: 10px; overflow: hidden;
-      display: flex; flex-direction: column; align-items: center;
+    .card {
+      background: #fefefe;
+      border-radius: 12px;
       padding: 10px;
+      box-shadow: 0 2px 6px #ccc;
+      text-align: center;
     }
-    .item-card img {
-      width: 100px; height: 100px; object-fit: cover;
+    .card img {
+      width: 100%; height: 100px; object-fit: cover;
       border-radius: 8px;
     }
-    .item-card input {
-      width: 60px; margin-top: 4px;
-      padding: 4px; text-align: center;
-    }
-    .item-card button {
-      margin-top: 6px; background: #ffd54f;
-      border: none; padding: 6px 10px; border-radius: 6px;
-      cursor: pointer; font-weight: bold;
-    }
-    .order-history-entry { padding: 4px 0; font-size: 0.9em; }
-    .notice-card {
-      background-color: #fff8e1;
-      padding: 10px; margin: 8px 0;
-      border-left: 4px solid #ffb300;
-    }
-    .btn-see-all {
-      float: right; background: #ffd54f;
-      padding: 6px 10px; border: none; border-radius: 8px;
-      font-weight: bold; cursor: pointer;
+    .card-name { font-size: 0.9em; margin: 6px 0; font-weight: bold; }
+    .card-price { font-size: 0.85em; color: #666; margin-bottom: 8px; }
+    .btn {
+      padding: 6px 10px;
+      font-size: 0.8em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #ffd54f;
+      font-weight: bold;
     }
     .footer {
-      text-align: center; color: #888; font-size: 0.9em;
-      margin-top: 30px;
+      text-align: center;
+      padding: 20px;
+      font-size: 0.85em;
+      color: #aaa;
     }
   </style>
 </head>
@@ -93,137 +107,87 @@
     <div class="logo">아름다운가게</div>
     <div class="user-info-box">
       <div class="user-name">{{ store_name }}님 어서오세요</div>
-      <div style="display: flex; gap: 10px;">
-        <div id="clock" class="clock-box">--:--:--</div>
-        <a href="{{ url_for('logout') }}">
-          <button class="logout-button">로그아웃</button>
-        </a>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <div id="clock" class="clock-box">--:--</div>
+        <a href="{{ url_for('logout') }}"><button class="logout-button">로그아웃</button></a>
       </div>
     </div>
   </div>
-
-  <div class="content">
-    <div class="left-panel">
-      <!-- 상품 둘러보기 -->
+  <div class="container">
+    <div>
       <div class="section">
-        <h2>🧸 상품 둘러보기
-          <a href="{{ url_for('user_request_form') }}"><button class="btn-see-all">+ 더보기</button></a>
-        </h2>
+        <h2>🧸 상품 둘러보기 <a href="{{ url_for('user_request_form') }}">+더보기</a></h2>
         <div class="card-grid">
           {% for item in items %}
-          <div class="item-card">
+          <div class="card">
             <img src="{{ item.image_url }}">
-            <div>{{ item.name }}</div>
-            <div>{{ "{:,}".format(item.price) }}원</div>
-            <input id="quantity-{{ item.id }}" type="number" value="1" min="1">
-            <button onclick="submitRequestDirect({{ item.id }})">신청</button>
+            <div class="card-name">{{ item.name }}</div>
+            <div class="card-price">₩{{ '{:,}'.format(item.price) }}</div>
+            <input id="quantity-{{ item.id }}" type="number" value="1" min="1" max="99" style="width: 60px;">
+            <button class="btn" onclick="submitRequestDirect({{ item.id }})">신청</button>
           </div>
           {% endfor %}
         </div>
       </div>
-
-      <!-- 비품 요청 -->
       <div class="section">
-        <h2>🐻 비품 요청/접수
-          <a href="{{ url_for('user_equipments') }}"><button class="btn-see-all">+ 더보기</button></a>
-        </h2>
+        <h2>🐻 비품 요청/접수 <a href="{{ url_for('user_equipments') }}">+더보기</a></h2>
         <div class="card-grid">
-          {% for e in equipments %}
-          <div class="item-card">
-            <img src="{{ e.image_url }}">
-            <div>{{ e.name }}</div>
-            <div>{{ e.unit_price }}원</div>
-            <input id="quantity_{{ e.id }}" type="number" value="1" min="1">
-            <button onclick="submitEquipmentRequest({{ e.id }})">담기</button>
+          {% for eq in equipments %}
+          <div class="card">
+            <img src="/static/uploads/{{ eq.image_filename }}">
+            <div class="card-name">{{ eq.name }}</div>
+            <div class="card-price">₩{{ '{:,}'.format(eq.unit_price) }}</div>
+            <input id="quantity_{{ eq.id }}" type="number" value="1" min="1" max="99" style="width: 60px;">
+            <button class="btn" onclick="submitEquipmentRequest({{ eq.id }})">담기</button>
           </div>
           {% endfor %}
         </div>
       </div>
-
-      <!-- 공지사항 -->
       <div class="section">
         <h2>📢 공지사항</h2>
         {% for n in notices %}
-          <div class="notice-card">
-            <b>{{ n.title }}</b><br><small>{{ n.date }}</small>
-          </div>
+          <p><strong>{{ n.title }}</strong> - {{ n.created_at }}</p>
         {% else %}
-          <div>공지사항이 없습니다.</div>
+          <p>📭 등록된 공지사항이 없습니다.</p>
         {% endfor %}
       </div>
     </div>
-
-    <div class="right-panel">
-      <!-- 입고 일정 -->
+    <div>
       <div class="section">
-        <h2>📦 입고 일정
-          <a href="{{ url_for('user_schedule') }}"><button class="btn-see-all">전체 보기</button></a>
-        </h2>
+        <h2>📦 입고 일정 <a href="{{ url_for('user_schedule') }}">전체보기</a></h2>
         {% for s in schedule %}
-          <div>{{ s.delivery_date }} | {{ s.name }} | {{ s.quantity }}개 | 배송중 🚚</div>
+          <div>{{ s.delivery_date }} | {{ s.name }} | {{ s.quantity }}개</div>
         {% else %}
-          <div>📬 예정된 입고 일정이 없습니다.</div>
+          <div>예정된 입고 일정이 없습니다.</div>
         {% endfor %}
       </div>
-
-      <!-- 주문 이력 -->
       <div class="section">
-        <h2>📁 주문 이력
-          <a href="{{ url_for('user_orders') }}"><button class="btn-see-all">+ 더보기</button></a>
-        </h2>
+        <h2>📁 주문 이력 <a href="{{ url_for('user_orders') }}">+더보기</a></h2>
         {% for order in recent_orders %}
-          <div class="order-history-entry">{{ order.order_date }} | {{ order.name }} {{ order.quantity }}개</div>
+          <div>{{ order.order_date }} | {{ order.name }} {{ order.quantity }}개</div>
         {% else %}
-          <div class="order-history-entry">주문 내역이 없습니다.</div>
+          <div>주문 내역이 없습니다.</div>
         {% endfor %}
       </div>
-
-      <!-- 쪽지함 버튼 -->
       <div class="section">
-        <h2>✉ 쪽지함</h2>
-        <button onclick="openMessageModal()">쪽지 확인 / 작성</button>
+        <h2>✉ 받은 쪽지함</h2>
+        {% for msg in messages[:3] %}
+          <div>📨 <strong>{{ msg.sender }}</strong>: {{ msg.content }}</div>
+        {% else %}
+          <div>받은 쪽지가 없습니다.</div>
+        {% endfor %}
+        <a href="{{ url_for('inbox') }}" class="btn" style="margin-top:10px; display:inline-block;">전체 보기</a>
       </div>
-
-      <div class="footer">릴라스테이션 ©2025 Created by carrot0217</div>
     </div>
   </div>
-
-  <!-- 모달: 쪽지함 -->
-  <div id="messageModal" style="display:none; position:fixed; top:10%; left:20%; width:60%; background:white; border:1px solid #ccc; border-radius:12px; padding:20px; z-index:1000; box-shadow:0 0 20px rgba(0,0,0,0.2);">
-    <h3>📨 쪽지함</h3>
-    <button onclick="closeMessageModal()">닫기</button>
-    <div>
-      <h4>받은 쪽지</h4>
-      {% for msg in received_messages %}
-        <div><b>{{ msg.sender }}</b>: {{ msg.content }}</div>
-      {% else %}
-        <div>쪽지가 없습니다.</div>
-      {% endfor %}
-    </div>
-    <hr>
-    <div>
-      <h4>새 쪽지 보내기</h4>
-      <form action="{{ url_for('send_message') }}" method="POST">
-        <select name="recipient_id">
-          {% for user in all_users %}
-            <option value="{{ user.id }}">{{ user.name }} ({{ user.store_name }})</option>
-          {% endfor %}
-        </select>
-        <textarea name="content" rows="3" style="width:100%;"></textarea>
-        <button type="submit">보내기</button>
-      </form>
-    </div>
-  </div>
+  <div class="footer">릴라스테이션 ©2025 Created by carrot0217</div>
 
   <script>
     function updateClock() {
       const now = new Date();
       const dateStr = now.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
       const timeStr = now.toLocaleTimeString('ko-KR', { hour12: false });
-      const clock = document.getElementById("clock");
-      clock.textContent = `${dateStr} ${timeStr}`;
-      clock.classList.add("blink");
-      setTimeout(() => clock.classList.remove("blink"), 200);
+      document.getElementById("clock").textContent = `${dateStr} ${timeStr}`;
     }
     setInterval(updateClock, 1000);
     updateClock();
@@ -249,13 +213,7 @@
       .then(res => res.json())
       .then(data => alert(data.success ? "비품 신청 완료!" : "실패: " + data.message));
     }
-
-    function openMessageModal() {
-      document.getElementById("messageModal").style.display = 'block';
-    }
-    function closeMessageModal() {
-      document.getElementById("messageModal").style.display = 'none';
-    }
   </script>
 </body>
 </html>
+
