@@ -1711,7 +1711,7 @@ def init_equipment_tables():
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute(\"\"\"
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS equipments (
             id SERIAL PRIMARY KEY,
             name TEXT NOT NULL,
@@ -1721,8 +1721,8 @@ def init_equipment_tables():
             description TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-    \"\"\")
-    cur.execute(\"\"\"
+    """)
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS equipment_requests (
             id SERIAL PRIMARY KEY,
             user_id TEXT NOT NULL,
@@ -1731,7 +1731,7 @@ def init_equipment_tables():
             request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             status TEXT DEFAULT '대기중'
         );
-    \"\"\")
+    """)
     conn.commit()
     cur.close()
     conn.close()
