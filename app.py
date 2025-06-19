@@ -1742,7 +1742,7 @@ def user_equipments():
 
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT id, name, price, stock, image FROM equipments ORDER BY id DESC")
+    cur.execute("SELECT id, name, unit_price, stock, image_filename FROM equipments ORDER BY id DESC")
     equipments = cur.fetchall()
     cur.close()
     conn.close()
@@ -1769,6 +1769,7 @@ def user_equipment_request():
         return jsonify(success=True)
     except Exception as e:
         return jsonify(success=False, message=str(e))
+
     
 # ----------------------- 서버 실행 -----------------------
 if __name__ == '__main__':

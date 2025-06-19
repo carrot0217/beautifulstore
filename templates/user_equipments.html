@@ -2,54 +2,52 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>비품 요청 목록</title>
+  <title>비품 요청 전체</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
       background-color: #fffaf3;
-      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
       padding: 40px;
     }
     h1 {
       color: #5a4031;
-      text-align: center;
-      margin-bottom: 30px;
+      font-size: 1.8em;
+      margin-bottom: 24px;
     }
     .equipment-grid {
       display: flex;
       flex-wrap: wrap;
       gap: 24px;
-      justify-content: center;
     }
     .equipment-card {
       width: 200px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
       padding: 16px;
+      border-radius: 12px;
+      background-color: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       text-align: center;
     }
     .equipment-card img {
-      width: 100%;
-      height: 120px;
+      width: 140px;
+      height: 140px;
       object-fit: cover;
-      border-radius: 8px;
-      margin-bottom: 10px;
+      border-radius: 10px;
     }
     .equipment-card p {
-      margin: 6px 0;
+      margin: 10px 0;
+      color: #444;
     }
-    .equipment-card input[type='number'] {
+    .equipment-card input[type="number"] {
       width: 60px;
-      padding: 6px;
+      padding: 4px;
       border-radius: 6px;
       border: 1px solid #ccc;
-      margin-right: 8px;
+      margin-right: 6px;
     }
     .equipment-card button {
-      padding: 6px 12px;
       background-color: #ffcc80;
+      padding: 6px 12px;
       border: none;
       border-radius: 6px;
       font-weight: bold;
@@ -58,21 +56,23 @@
   </style>
 </head>
 <body>
-  <h1>🐻 전체 비품 요청 목록</h1>
+  <h1>🐻 비품 요청/접수 전체 보기</h1>
   <div class="equipment-grid">
     {% for e in equipments %}
     <div class="equipment-card">
-      {% if e[4] %}<img src="/static/uploads/{{ e[4] }}">{% else %}<div style="height: 120px; background:#eee; border-radius:8px;"></div>{% endif %}
+      {% if e[4] %}
+      <img src="/static/uploads/{{ e[4] }}" alt="비품 이미지">
+      {% endif %}
       <p><strong>{{ e[1] }}</strong></p>
       <p>단가: {{ e[2] }}원</p>
-      <div style="margin-top: 8px;">
+      <p>재고: {{ e[3] }}개</p>
+      <div>
         <input type="number" id="quantity_{{ e[0] }}" min="1" value="1">
         <button onclick="submitEquipmentRequest({{ e[0] }})">신청</button>
       </div>
     </div>
     {% endfor %}
   </div>
-
   <script>
     function submitEquipmentRequest(equipmentId) {
       const qty = document.getElementById('quantity_' + equipmentId).value;
