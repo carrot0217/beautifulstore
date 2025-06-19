@@ -153,7 +153,7 @@
     </div>
   </div>
   <div class="container">
-    {{ content|safe }}
+    {% block content %}{{ content|safe }}{% endblock %}
   </div>
   <div class="footer">릴라스테이션 ©2025 Created by carrot0217</div>
   <script>
@@ -196,5 +196,4 @@
   </script>
 </body>
 </html>
-
 
