@@ -1734,7 +1734,42 @@ def add_equipment():
     conn.close()
 
     return redirect(url_for('admin_equipments'))
+# ----------------------- 이킙먼트 유저 -----------------------
+@app.route('/user/equipments')
+def user_equipments():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
 
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, price, stock, image FROM equipments ORDER BY id DESC")
+    equipments = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template('user_equipments.html', equipments=equipments)
+
+@app.route('/user/equipment/request', methods=['POST'])
+def user_equipment_request():
+    if 'user_id' not in session:
+        return jsonify(success=False, message="로그인 필요")
+
+    equipment_id = request.form.get('equipment_id')
+    quantity = request.form.get('quantity')
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO equipment_requests (user_id, equipment_id, quantity, request_date)
+            VALUES (%s, %s, %s, CURRENT_DATE)
+        """, (session['user_id'], equipment_id, quantity))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify(success=True)
+    except Exception as e:
+        return jsonify(success=False, message=str(e))
+    
 # ----------------------- 서버 실행 -----------------------
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000, debug=True)
