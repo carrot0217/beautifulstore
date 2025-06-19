@@ -819,15 +819,15 @@ def user_home():
     """, (username,))
     messages = cur.fetchall()
 
-# 🔹 최근 상품 10개
-cur.execute("""
+    # 🔹 최근 상품 10개
+    cur.execute("""
     SELECT id, name, unit_price, image
     FROM items
     WHERE quantity > 0
     ORDER BY id DESC
     LIMIT 10
-""")
-items = [
+    """)
+    items = [
     {
         "id": row[0],
         "name": row[1],
