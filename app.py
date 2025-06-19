@@ -1710,28 +1710,53 @@ def add_equipment():
         return redirect(url_for('login'))
 
     name = request.form['name']
-    unit_price = request.form['unit_price']
-    stock = request.form['stock']
-    description = request.form.get('description', '')
 
     image_file = request.files.get('image')
     image_filename = None
-    if image_file:
+    if image_file and image_file.filename:
         ext = image_file.filename.split('.')[-1]
         image_filename = f"{uuid.uuid4()}.{ext}"
         image_file.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
 
+    # HTML 입력 필드에서 단가, 수량, 설명 제거된 상태이므로 기본값 삽입
+    default_unit_price = 0
+    default_stock = 0
+
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO equipments (name, unit_price, stock, image_filename, description)
-        VALUES (%s, %s, %s, %s, %s)
-    """, (name, unit_price, stock, image_filename, description))
+        INSERT INTO equipments (name, unit_price, stock, image_filename)
+        VALUES (%s, %s, %s, %s)
+    """, (name, default_unit_price, default_stock, image_filename))
     conn.commit()
     cur.close()
     conn.close()
 
     return redirect(url_for('admin_equipments'))
+
+@app.route('/admin/equipments')
+def admin_equipments():
+    if not session.get('is_admin'):
+        return redirect(url_for('login'))
+
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, unit_price, stock, image_filename, created_at FROM equipments ORDER BY id DESC")
+    equipments = [
+        {
+            "id": row[0],
+            "name": row[1],
+            "unit_price": row[2],
+            "stock": row[3],
+            "image_filename": row[4],
+            "created_at": row[5]
+        }
+        for row in cur.fetchall()
+    ]
+    cur.close()
+    conn.close()
+
+    return render_template('admin_equipments.html', equipments=equipments)
 # ----------------------- 이킙먼트 유저 -----------------------
 @app.route('/user/equipments')
 def user_equipments():
@@ -1775,6 +1800,7 @@ def delete_selected_equipments():
 
     ids = request.form.getlist('delete_ids')
     if ids:
+        ids = list(map(int, ids))  # 문자열 → 정수
         conn = get_connection()
         cur = conn.cursor()
         cur.execute("DELETE FROM equipments WHERE id = ANY(%s)", (ids,))
@@ -1782,9 +1808,7 @@ def delete_selected_equipments():
         cur.close()
         conn.close()
 
-    return redirect(url_for('equipment_register'))
-
-
+    return redirect(url_for('admin_equipments'))
 
 # ----------------------- 서버 실행 -----------------------
 if __name__ == '__main__':
