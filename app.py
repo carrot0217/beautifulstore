@@ -1777,12 +1777,13 @@ def delete_selected_equipments():
     if ids:
         conn = get_connection()
         cur = conn.cursor()
-        cur.execute(f"DELETE FROM equipments WHERE id = ANY(%s)", (ids,))
+        cur.execute("DELETE FROM equipments WHERE id = ANY(%s)", (ids,))
         conn.commit()
         cur.close()
         conn.close()
 
     return redirect(url_for('equipment_register'))
+
 
 # ----------------------- 서버 실행 -----------------------
 if __name__ == '__main__':
