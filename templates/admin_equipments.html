@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>📎 비품 등록</title>
+  <style>
+    body { background: #fffaf3; font-family: 'Segoe UI', sans-serif; padding: 40px; }
+    h1 { color: #5a4031; margin-bottom: 20px; }
+    form { margin-bottom: 30px; }
+    input, textarea {
+      padding: 8px; border-radius: 6px; border: 1px solid #ccc; margin: 6px;
+    }
+    table {
+      width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 10px #eee;
+    }
+    th, td {
+      padding: 12px; text-align: center; border-bottom: 1px solid #ddd;
+    }
+    th { background: #ffecb3; color: #4e342e; }
+    .submit-btn {
+      background: #ffd54f; padding: 10px 18px; border: none; font-weight: bold; border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📎 비품 등록</h1>
+  <form action="/admin/equipment/add" method="post" enctype="multipart/form-data">
+    <input type="text" name="name" placeholder="비품명" required>
+    <input type="number" name="unit_price" placeholder="생산단가" required>
+    <input type="number" name="stock" placeholder="재고수량" required>
+    <textarea name="description" placeholder="설명" rows="2"></textarea>
+    <input type="file" name="image">
+    <button class="submit-btn" type="submit">등록</button>
+  </form>
+
+  <table>
+    <tr><th>사진</th><th>비품명</th><th>단가</th><th>수량</th><th>등록일</th></tr>
+    {% for e in equipments %}
+    <tr>
+      <td>{% if e[4] %}<img src="/static/uploads/{{ e[4] }}" width="60">{% endif %}</td>
+      <td>{{ e[1] }}</td>
+      <td>{{ e[2] }}원</td>
+      <td>{{ e[3] }}</td>
+      <td>{{ e[6].strftime('%Y-%m-%d') }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>
