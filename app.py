@@ -906,6 +906,20 @@ def user_home():
         notices=notices,
         equipments=equipments  # ✅ 비품 전달
     )
+# ----------------------- 관리자페이지 비품요청 라우트 ----------------------
+@app.route('/admin/equipments')
+def admin_equipments():
+    if not session.get('is_admin'):
+        return redirect(url_for('login'))
+
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM equipments ORDER BY id DESC")
+    equipments = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return render_template('admin_equipments.html', equipments=equipments)
 
 # ----------------------- 관리자페이지 매장 수정라우트 ----------------------
 @app.route('/admin/users/<int:user_id>/edit_store', methods=['POST'])
