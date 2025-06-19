@@ -1743,6 +1743,30 @@ def admin_equipments():
     conn.close()
 
     return render_template('admin_equipments.html', equipments=equipments)
+@app.route('/user/items')
+def user_items():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    category = request.args.get('category', '전체')
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    if category == '전체':
+        cur.execute("SELECT id, name, price, quantity, description, image_url, category FROM items ORDER BY id DESC")
+    else:
+        cur.execute("SELECT id, name, price, quantity, description, image_url, category FROM items WHERE category = %s ORDER BY id DESC", (category,))
+
+    items = cur.fetchall()
+
+    cur.execute("SELECT DISTINCT category FROM items ORDER BY category")
+    categories = [row[0] for row in cur.fetchall()]
+    
+    cur.close()
+    conn.close()
+
+    return render_template('user_request_form.html', items=items, categories=categories, current_category=category)
 # ----------------------- 이킙먼트 유저 -----------------------
 @app.route('/user/equipments')
 def user_equipments():
