@@ -171,8 +171,9 @@
       </div>
       <div class="section">
         <h2>✉ 받은 쪽지함</h2>
-        {% for msg in messages[:3] %}
-          <div>📨 <strong>{{ msg.sender }}</strong>: {{ msg.content }}</div>
+        {% if messages %}
+           {% for msg in messages[:3] %}
+          <div>📨 <strong>{{ msg[0] }}</strong>: {{ msg[1] }}</div>
         {% else %}
           <div>받은 쪽지가 없습니다.</div>
         {% endfor %}
