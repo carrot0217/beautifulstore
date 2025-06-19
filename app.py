@@ -887,6 +887,10 @@ def user_home():
     """)
     notices = cur.fetchall()
 
+    # ✅ 🔹 비품 4개만 가져오기
+    cur.execute("SELECT * FROM equipments ORDER BY id DESC LIMIT 4")
+    equipments = cur.fetchall()
+
     cur.close()
     conn.close()
 
@@ -899,8 +903,10 @@ def user_home():
         recent_orders=recent_orders,
         recipients=recipients,
         messages=messages,
-        notices=notices  # ✅ 추가된 notices 변수
+        notices=notices,
+        equipments=equipments  # ✅ 비품 전달
     )
+
 # ----------------------- 관리자페이지 매장 수정라우트 ----------------------
 @app.route('/admin/users/<int:user_id>/edit_store', methods=['POST'])
 def edit_user_store(user_id):
