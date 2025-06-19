@@ -50,6 +50,19 @@
       font-weight: bold;
       cursor: pointer;
     }
+    .btn-small {
+      background-color: #ffe082;
+      color: #5a4031;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    .btn-small:hover {
+      background-color: #ffcc4d;
+    }
     .container {
       display: grid;
       grid-template-columns: 2fr 1fr;
@@ -108,13 +121,6 @@
       gap: 10px;
       margin-bottom: 10px;
     }
-    .msg-tab-buttons button {
-      padding: 6px 12px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      cursor: pointer;
-      background: #fff;
-    }
     .msg-box textarea {
       width: 100%; height: 60px; border-radius: 6px; padding: 6px; margin-top: 6px;
     }
@@ -138,7 +144,7 @@
   <div class="container">
     <div>
       <div class="section">
-        <h2>🧸 상품 둘러보기 <a href="{{ url_for('user_request_form') }}">+더보기</a></h2>
+        <h2>🧸 상품 둘러보기 <a href="{{ url_for('user_request_form') }}" class="btn-small">+더보기</a></h2>
         <div class="card-grid">
           {% for item in items %}
           <div class="card">
@@ -152,7 +158,7 @@
         </div>
       </div>
       <div class="section">
-        <h2>🐻 비품 요청/접수 <a href="{{ url_for('user_equipments') }}">+더보기</a></h2>
+        <h2>🐻 비품 요청/접수 <a href="{{ url_for('user_equipments') }}" class="btn-small">+더보기</a></h2>
         <div class="card-grid">
           {% for eq in equipments %}
           <div class="card">
@@ -176,7 +182,7 @@
     </div>
     <div>
       <div class="section">
-        <h2>📦 입고 일정 <a href="{{ url_for('user_schedule') }}">전체보기</a></h2>
+        <h2>📦 입고 일정 <a href="{{ url_for('user_schedule') }}" class="btn-small">전체보기</a></h2>
         {% for s in schedule %}
           <div>{{ s.delivery_date }} | {{ s.name }} | {{ s.quantity }}개</div>
         {% else %}
@@ -184,7 +190,7 @@
         {% endfor %}
       </div>
       <div class="section">
-        <h2>📁 주문 이력 <a href="{{ url_for('user_orders') }}">+더보기</a></h2>
+        <h2>📁 주문 이력 <a href="{{ url_for('user_orders') }}" class="btn-small">+더보기</a></h2>
         {% for order in recent_orders %}
           <div>{{ order.order_date }} | {{ order.name }} {{ order.quantity }}개</div>
         {% else %}
@@ -194,8 +200,8 @@
       <div class="section">
         <h2>✉ 쪽지함</h2>
         <div class="msg-tab-buttons">
-          <button onclick="showTab('received')">받은 쪽지</button>
-          <button onclick="showTab('send')">새 쪽지 보내기</button>
+          <button class="btn-small" onclick="showTab('received')">받은 쪽지</button>
+          <button class="btn-small" onclick="showTab('send')">새 쪽지 보내기</button>
         </div>
         <div id="received" class="msg-tab">
           {% if messages and messages|length > 0 %}
