@@ -1768,7 +1768,22 @@ def user_equipment_request():
     except Exception as e:
         return jsonify(success=False, message=str(e))
 
-    
+@app.route('/admin/equipment/delete', methods=['POST'])
+def delete_selected_equipments():
+    if 'user_id' not in session or not session.get('is_admin'):
+        return redirect(url_for('login'))
+
+    ids = request.form.getlist('delete_ids')
+    if ids:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute(f"DELETE FROM equipments WHERE id = ANY(%s)", (ids,))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+    return redirect(url_for('equipment_register'))
+
 # ----------------------- 서버 실행 -----------------------
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000, debug=True)
