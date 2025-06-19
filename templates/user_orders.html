@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>📁 주문 이력</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background-color: #fffaf3;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 40px;
+    }
+    h2 {
+      color: #5a4031;
+      margin-bottom: 20px;
+    }
+    table {
+      margin: 0 auto;
+      width: 90%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+    }
+    th {
+      background-color: #ffcc80;
+      color: #4e342e;
+    }
+    .btn-download {
+      margin: 20px;
+      padding: 10px 20px;
+      background-color: #ffcc80;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #loader {
+      position: fixed;
+      width: 100vw;
+      height: 100vh;
+      background: #fffaf3;
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.5rem;
+      color: #5a4031;
+      transition: opacity 0.5s ease;
+    }
+    .status-done { color: #219a00; font-weight: bold; }
+    .status-shipping { color: #1565c0; font-weight: bold; }
+    .status-ready { color: #c56a00; font-weight: bold; }
+    .status-cancel { color: #d32f2f; font-weight: bold; }
+    .top-bar {
+      width: 100%;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      position: relative;
+      margin-bottom: 0;
+      margin-top: 3cm;
+    }
+    .go-back-btn {
+      position: absolute;
+      left: 3cm;
+      top: 0;
+      background: #ffd180;
+      color: #4e342e;
+      font-weight: bold;
+      border-radius: 12px;
+      padding: 10px 18px;
+      text-decoration: none;
+      font-size: 1em;
+      box-shadow: 0 2px 10px #ffecb3;
+      transition: background 0.15s;
+    }
+    .go-back-btn:hover {
+      background-color: #ffc04d;
+    }
+    .top-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .top-title h2 {
+      margin: 0;
+      color: #5a4031;
+      font-size: 2.1em;
+    }
+    .margin-b-2cm { height: 2cm; }
+    .order-cancel-btn[disabled] {
+      background: #eee !important;
+      color: #bbb !important;
+      cursor: not-allowed !important;
+    }
+    #cancelModal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.4);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+    #cancelModalContent {
+      background: #fffaf3;
+      padding: 24px 32px;
+      border-radius: 12px;
+      width: 360px;
+      text-align: center;
+      box-shadow: 0 0 20px #00000022;
+    }
+  </style>
+  <script>
+    setInterval(function () {
+      const url = new URL(window.location.href);
+      window.location.href = url.href;
+    }, 30000);
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const loader = document.getElementById("loader");
+      if (loader) {
+        loader.style.opacity = 0;
+        setTimeout(() => loader.style.display = "none", 500);
+      }
+    });
+
+    let currentOrderId = null;
+
+    function openCancelModal(orderId) {
+      currentOrderId = orderId;
+      document.getElementById("cancelReason").value = '';
+      document.getElementById("cancelModal").style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("cancelModal").style.display = "none";
+    }
+
+    async function submitCancel() {
+      const reason = document.getElementById("cancelReason").value.trim();
+      if (!reason) {
+        alert("취소 사유를 입력해주세요.");
+        return;
+      }
+
+      const response = await fetch(`/user/orders/cancel_ajax/${currentOrderId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert("주문이 취소되었습니다.");
+        window.location.reload();
+      } else {
+        alert("실패: " + result.message);
+      }
+    }
+
+    function closeDeleteModal() {
+      document.getElementById("deleteSuccessModal").style.display = "none";
+    }
+
+    async function deleteOrder(orderId) {
+      if (!confirm("정말 삭제하시겠습니까?")) return;
+
+      const response = await fetch(`/user/orders/delete/${orderId}`, {
+        method: 'POST'
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        document.getElementById("deleteSuccessModal").style.display = "flex";
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        alert("삭제 실패: " + (result.message || "알 수 없는 오류"));
+      }
+    }
+  </script>
+</head>
+<body>
+<div id="loader">⏳ 로딩 중입니다...</div>
+<div class="top-bar">
+  <a href="{{ url_for('user_home') }}" class="go-back-btn" title="이전 화면">
+    ⬅️ 이전 화면
+  </a>
+  <div class="top-title">
+    <span style="font-size: 1.4em;">📄</span>
+    <h2>주문내역</h2>
+  </div>
+</div>
+<div class="margin-b-2cm"></div>
+<form method="get" style="margin-bottom: 20px;">
+  <label>📅 시작일:
+    <input type="date" name="start_date" value="{{ request.args.get('start_date', '') }}">
+  </label>
+  <label>📅 종료일:
+    <input type="date" name="end_date" value="{{ request.args.get('end_date', '') }}">
+  </label>
+  <label>💰 품목명:
+    <select name="item_name">
+      <option value="">전체</option>
+      {% if item_list %}
+        {% for name in item_list %}
+          <option value="{{ name }}" {% if request.args.get('item_name') == name %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      {% endif %}
+    </select>
+  </label>
+  <label>📦 상태:
+    <select name="status">
+      <option value="">전체</option>
+      <option value="완료" {% if request.args.get('status') == '완료' %}selected{% endif %}>완료</option>
+      <option value="대기 중" {% if request.args.get('status') == '대기 중' %}selected{% endif %}>대기 중</option>
+    </select>
+  </label>
+  <button type="submit" class="btn-download">🔍 필터 적용</button>
+</form>
+<a href="/user/orders/download">
+  <button class="btn-download">📅 엑셀 다운로드</button>
+</a>
+<table>
+  <tr>
+    <th>신청일</th><th>품목명</th><th>수량</th><th>상태</th><th>배송일</th><th>작업</th>
+  </tr>
+  {% for order in orders %}
+  <tr>
+    <td>{{ order['wish_date'].strftime('%Y-%m-%d') if order['wish_date'] else '-' }}</td>
+    <td>{{ order['item_name'] }}</td>
+    <td>{{ order['quantity'] }}</td>
+    <td>
+      {% if order['status'] == '완료' and order['delivery_date'] %}
+        {% if order['delivery_date'] <= today %}
+          <span class="status-done">완료</span>
+        {% else %}
+          <span class="status-shipping">배송중 🚚</span>
+        {% endif %}
+      {% elif order['status'] == '삭제됨' %}
+        <span class="status-cancel">삭제됨</span><br>
+        {% if order['cancel_reason'] %}<small>{{ order['cancel_reason'] }}</small>{% endif %}
+      {% elif order['status'] and order['status'].startswith('취소됨') %}
+        <span class="status-cancel">{{ order['status'] }}</span><br>
+        {% if order['cancel_reason'] %}<small>{{ order['cancel_reason'] }}</small>{% endif %}
+      {% else %}
+        <span class="status-ready">{{ order['status'] or '대기 중' }}</span>
+      {% endif %}
+    </td>
+    <td>{{ order['delivery_date'].strftime('%Y-%m-%d') if order['delivery_date'] else '-' }}</td>
+    <td>
+      <button class="btn-download order-cancel-btn"
+        onclick="openCancelModal({{ order['id'] }})"
+        {% if (order['status'] == '완료' and order['delivery_date'] and order['delivery_date'] > today)
+              or (order['status'] and (order['status'].startswith('취소됨') or order['status'] == '삭제됨')) %}
+            disabled
+        {% endif %}>주문취소</button>
+      {% if order['status'] and (order['status'].startswith('취소됨') or order['status'] == '삭제됨') %}
+        <button class="btn-download order-cancel-btn" type="button" style="margin-left:8px;" onclick="deleteOrder({{ order['id'] }})">삭제</button>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<div id="cancelModal">
+  <div id="cancelModalContent">
+    <h3 style="margin-bottom:12px;">취소 사유 입력</h3>
+    <textarea id="cancelReason" rows="4" style="width:100%; padding:8px; border-radius:8px;"></textarea><br>
+    <button type="button" onclick="submitCancel()" style="margin-top:10px; padding:8px 16px; background:#fbc02d; border:none; border-radius:8px; font-weight:bold; cursor: pointer;">확인</button>
+    <button type="button" onclick="closeModal()" style="margin-left:10px; padding:8px 16px; background:#ccc; border:none; border-radius:8px; cursor: pointer;">닫기</button>
+  </div>
+</div>
+
+<div id="deleteSuccessModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color: rgba(0,0,0,0.4); z-index:9999; justify-content:center; align-items:center;">
+  <div style="background:#fffaf3; padding:24px 32px; border-radius:12px; width:300px; text-align:center; box-shadow:0 0 20px #00000022;">
+    <p style="font-size:1.1em; margin-bottom:20px;">✅ 삭제되었습니다</p>
+    <button onclick="closeDeleteModal()" style="padding:8px 16px; background:#fbc02d; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">닫기</button>
+  </div>
+</div>
+<div style="margin-top: 30px;">
+  {% if total_pages > 1 %}
+    <div style="display: flex; justify-content: center; gap: 10px; font-size: 1em; color: #5a4031;">
+      {% if current_page > 1 %}
+        <a href="{{ url_for('user_orders', page=current_page-1, start_date=request.args.get('start_date'), end_date=request.args.get('end_date'), item_name=request.args.get('item_name'), status=request.args.get('status')) }}" style="text-decoration: none; background-color: #ffe082; padding: 6px 12px; border-radius: 8px;">⬅ 이전</a>
+      {% endif %}
+      {% for p in range(1, total_pages + 1) %}
+        {% if p == current_page %}
+          <span style="font-weight: bold; background-color: #ffcc80; padding: 6px 12px; border-radius: 8px;">{{ p }}</span>
+        {% else %}
+          <a href="{{ url_for('user_orders', page=p, start_date=request.args.get('start_date'), end_date=request.args.get('end_date'), item_name=request.args.get('item_name'), status=request.args.get('status')) }}" style="text-decoration: none; color: #5a4031; background-color: #ffd180; padding: 6px 12px; border-radius: 8px;">{{ p }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if current_page < total_pages %}
+        <a href="{{ url_for('user_orders', page=current_page+1, start_date=request.args.get('start_date'), end_date=request.args.get('end_date'), item_name=request.args.get('item_name'), status=request.args.get('status')) }}" style="text-decoration: none; background-color: #ffe082; padding: 6px 12px; border-radius: 8px;">다음 ➡</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+
+</body>
+</html>

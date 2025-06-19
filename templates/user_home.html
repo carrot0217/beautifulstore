@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>아름다운가게 홈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #fffaf3;
+      margin: 0;
+      padding: 0;
+    }
+    .top-bar {
+      background-color: #d88f30;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 12px 24px;
+      position: relative;
+    }
+    .logo { font-size: 1.2em; font-weight: bold; }
+    .user-info-box {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+    .user-name {
+      font-size: 0.95em;
+      font-weight: bold;
+      color: white;
+    }
+    .clock-box {
+      background-color: #fff3e0;
+      color: #5a4031;
+      padding: 6px 14px;
+      border-radius: 14px;
+      font-size: 1em;
+      font-weight: bold;
+      border: 1px solid #ffd54f;
+    }
+    .logout-button {
+      background-color: #ffe082;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-small {
+      background-color: #ffe082;
+      color: #5a4031;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    .btn-small:hover {
+      background-color: #ffcc4d;
+    }
+    .btn-small a {
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      padding: 30px;
+    }
+    .section {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+    .section h2 {
+      font-size: 1.2em;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 14px;
+    }
+    .card {
+      background: #fefefe;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 2px 6px #ccc;
+      text-align: center;
+    }
+    .card img {
+      width: 100%; height: 100px; object-fit: cover;
+      border-radius: 8px;
+    }
+    .card-name { font-size: 0.9em; margin: 6px 0; font-weight: bold; }
+    .card-price { font-size: 0.85em; color: #666; margin-bottom: 8px; }
+    .btn {
+      padding: 6px 10px;
+      font-size: 0.8em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #ffd54f;
+      font-weight: bold;
+    }
+    .btn:hover {
+      background: #ffcc4d;
+    }
+    .footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 0.85em;
+      color: #aaa;
+    }
+    .msg-tab-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .msg-tab-buttons button {
+      cursor: pointer;
+    }
+    .msg-box textarea {
+      width: 100%; height: 60px; border-radius: 6px; padding: 6px; margin-top: 6px;
+    }
+    .msg-box select {
+      width: 100%; padding: 6px; border-radius: 6px; margin-bottom: 6px;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div class="logo">아름다운가게</div>
+    <div class="user-info-box">
+      <div class="user-name">{{ store_name or '사용자' }}님 어서오세요</div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <div id="clock" class="clock-box">--:--</div>
+        <a href="{{ url_for('logout') }}"><button class="logout-button">로그아웃</button></a>
+      </div>
+    </div>
+  </div>
+
+<div class="section">
+  <h2>
+    📦 새로운 상품!
+    <a href="/user/items" class="btn-small" style="margin-left:auto;">더보기</a>
+  </h2>
+  <div class="card-grid">
+    {% for item in items %}
+      <div class="card">
+        <img src="{{ item.image_url }}" alt="{{ item.name }}">
+        <div class="card-name">{{ item.name }}</div>
+        <div class="card-price">{{ item.price | round | int }}원</div>
+        <input type="number" id="quantity-{{ item.id }}" min="1" max="99" value="1" style="width: 60px;">
+        <button class="btn" onclick="submitRequestDirect({{ item.id }})">신청하기</button>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+    <div class="section">
+ <h2>
+  🚚 입고 일정
+  <a href="/user/incoming" class="btn-small" style="margin-left:auto;">더보기</a>
+</h2>
+      {% if schedule %}
+        <ul>
+          {% for s in schedule %}
+            <li>{{ s.delivery_date }} - {{ s.name }} ({{ s.quantity }}개)</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>예정된 입고 일정이 없습니다.</p>
+      {% endif %}
+    </div>
+
+    <div class="section">
+      <h2>
+  🧾 최근 주문
+  <a href="/user/orders" class="btn-small" style="margin-left:auto;">더보기</a>
+</h2>
+      {% if recent_orders %}
+        <ul>
+          {% for order in recent_orders %}
+            <li>{{ order.order_date }} - {{ order.name }} ({{ order.quantity }}개)</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>최근 주문 내역이 없습니다.</p>
+      {% endif %}
+    </div>
+
+    <div class="section">
+      <h2>📢 공지사항</h2>
+      {% if notices %}
+        <ul>
+          {% for n in notices %}
+            <li>{{ n[1] }} ({{ n[3].strftime('%Y-%m-%d') }})</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>공지사항이 없습니다.</p>
+      {% endif %}
+    </div>
+
+    <div class="section">
+      <h2>
+  🛠 비품 요청
+  <a href="/user/equipments" class="btn-small" style="margin-left:auto;">더보기</a>
+</h2>
+      <div class="card-grid">
+        {% for eq in equipments %}
+          <div class="card">
+            <img src="/static/uploads/{{ eq.image_filename or 'noimage.png' }}" alt="{{ eq.name }}">
+            <div class="card-name">{{ eq.name }}</div>
+            <div class="card-price">{{ eq.unit_price | round | int }}원 | 재고: {{ eq.stock }}</div>
+            <input type="number" id="quantity_{{ eq.id }}" min="1" max="99" value="1" style="width: 60px;">
+            <button class="btn" onclick="submitEquipmentRequest({{ eq.id }})">신청하기</button>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📨 쪽지함</h2>
+      <div class="msg-tab-buttons">
+        <button onclick="showTab('received')" class="btn-small">받은 쪽지함</button>
+        <button onclick="showTab('send')" class="btn-small">쪽지 보내기</button>
+      </div>
+
+      <div id="received">
+        {% if messages %}
+          <ul>
+            {% for m in messages %}
+              <li><strong>{{ m[0] }}</strong>: {{ m[1] }} <small>({{ m[2] }})</small></li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>받은 쪽지가 없습니다.</p>
+        {% endif %}
+      </div>
+
+      <div id="send" class="hidden">
+        <form method="POST" action="/user/messages/send" class="msg-box">
+          <select name="recipient">
+            {% for r in recipients %}
+              <option value="{{ r[0] }}">{{ r[1] }}{% if r[2] %} (관리자){% endif %}</option>
+            {% endfor %}
+          </select>
+          <textarea name="content" placeholder="내용 입력..." required></textarea>
+          <button type="submit" class="btn-small">보내기</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">릴라스테이션 ©2025 Created by carrot0217</div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+      const timeStr = now.toLocaleTimeString('ko-KR', { hour12: false });
+      document.getElementById("clock").textContent = `${dateStr} ${timeStr}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function submitRequestDirect(itemId) {
+      const quantity = document.getElementById(`quantity-${itemId}`).value;
+      fetch("/user/request/ajax", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ item_id: itemId, quantity })
+      })
+      .then(res => res.json())
+      .then(data => alert(data.success ? "신청 완료!" : "신청 실패: " + data.message));
+    }
+
+    function submitEquipmentRequest(id) {
+      const quantity = document.getElementById(`quantity_${id}`).value;
+      fetch("/user/equipment/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `equipment_id=${id}&quantity=${quantity}`
+      })
+      .then(res => res.json())
+      .then(data => alert(data.success ? "비품 신청 완료!" : "실패: " + data.message));
+    }
+
+    function showTab(tabName) {
+      document.getElementById('received').classList.add('hidden');
+      document.getElementById('send').classList.add('hidden');
+      document.getElementById(tabName).classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>📦 전체 상품</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@600&display=swap" rel="stylesheet">
+  <style>
+    body { background-color: #fffaf3; font-family: 'Nunito Sans', sans-serif; padding: 40px 0; margin: 0; }
+    h2 { color: #5a4031; margin-bottom: 26px; text-align: center; }
+    .tabs {
+      display: flex; justify-content: center; gap: 18px; margin-bottom: 36px;
+    }
+    .tab-btn {
+      background: #fff7e3; color: #a27a3a; font-weight: bold;
+      border: none; border-radius: 12px 12px 0 0;
+      padding: 10px 28px 9px 28px; font-size: 1.08em; cursor: pointer;
+      transition: background 0.13s; box-shadow: 0 3px 12px #f1e2b2; border-bottom: 3px solid transparent;
+    }
+    .tab-btn.active {
+      background: #ffecbe; color: #5a4031; border-bottom: 3px solid #ffda7a;
+    }
+    .product-list {
+      display: flex; flex-wrap: wrap; gap: 36px 32px; justify-content: center; margin: 0 auto; max-width: 1200px;
+    }
+    .card {
+      background: linear-gradient(145deg, #fffce9 75%, #f3eddb 100%);
+      border-radius: 22px; box-shadow: 0 5px 24px #f6ecd8; padding: 32px 22px 18px 22px;
+      width: 275px; display: flex; flex-direction: column; align-items: center; position: relative; transition: box-shadow 0.2s;
+    }
+    .card:hover { box-shadow: 0 8px 40px #ead7a6; }
+    .img-wrapper {
+      width: 160px; height: 160px; position: relative; border-radius: 16px; overflow: hidden;
+      box-shadow: 0 2px 12px #ede1be; margin-bottom: 18px; background: #eee6cc;
+    }
+    .thumb {
+      width: 100%; height: 100%; object-fit: cover; cursor: pointer;
+      display: block; border-radius: 16px; transition: filter 0.17s;
+    }
+    .thumb:hover { filter: brightness(1.07) saturate(1.05); }
+    .zoom-icon {
+      position: absolute; top: 10px; right: 10px; width: 26px; height: 26px;
+      background: rgba(255,255,255,0.87); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 4px #e2d2a6; cursor: pointer; z-index: 2; transition: background 0.13s;
+    }
+    .zoom-icon:hover { background: #ffe0b2; }
+    .zoom-icon svg { width: 17px; height: 17px; stroke: #ae8236; fill: none; stroke-width: 2.5; }
+    .sold-out {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(40,40,40,0.47); display: flex; align-items: center; justify-content: center;
+      font-size: 2em; color: #fff; font-weight: 800; z-index: 9; letter-spacing: 0.05em; pointer-events: none; user-select: none;
+    }
+    .info { text-align: center; margin-top: 10px; }
+    .info .name { font-weight: bold; font-size: 1.17em; margin-bottom: 1px; color: #5a4031; }
+    .info .category { font-size: 0.98em; color: #b49b72; margin-bottom: 3px; }
+    .info .stock { color: #de3030; font-weight: bold; }
+    .info .unit-price { font-weight: bold; color: #007acc; }
+    .actions {
+      margin-top: 12px; display: flex; gap: 6px; align-items: center; min-height: 39px;
+    }
+    .qty {
+      width: 46px; padding: 6px; border-radius: 6px; border: 1px solid #ccc; text-align: center;
+      font-family: 'Nunito Sans', sans-serif; font-size: 1em;
+    }
+    .actions button {
+      padding: 6px 14px; background-color: #a5dfc4; border: none; border-radius: 8px;
+      font-weight: bold; font-size: 0.97em; cursor: pointer; color: #174d3f;
+      box-shadow: 0 3px 8px #d8f2e1; transition: background 0.15s;
+    }
+    .actions button:disabled, .qty:disabled {
+      background: #ececec !important; color: #bababa !important;
+      cursor: not-allowed; box-shadow: none;
+    }
+    .actions button:hover:enabled { background-color: #7ecaa6; }
+    .popup-modal {
+      display: none; position: fixed; left: 0; top: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.4); align-items: center; justify-content: center; z-index: 9999;
+    }
+    .popup-modal.open { display: flex; }
+    .popup-box {
+      background: white; padding: 24px 36px; border-radius: 20px; text-align: center;
+      box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    }
+    .popup-icon { font-size: 2rem; margin-bottom: 10px; }
+    .popup-title { font-size: 1.1rem; margin-bottom: 16px; }
+    .popup-btn { padding: 8px 18px; background: #a5dfc4; border: none; border-radius: 8px; font-weight: bold; color: #174d3f; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div style="margin-bottom: 24px; text-align: left; padding-left: 40px;">
+    <a href="{{ url_for('user_home') }}" style="background-color: #ffd180; color: #4e342e; text-decoration: none; padding: 10px 18px; border-radius: 12px; font-weight: bold; box-shadow: 0 2px 6px #ffecb3; display: inline-block;">⬅️ 이전 화면</a>
+  </div>
+  <h2>📦 상품 전체 보기</h2>
+   <div class="tabs" id="categoryTabs">
+    <button class="tab-btn{% if current_category == '전체' %} active{% endif %}" onclick="window.location.href='?category=전체'" type="button">전체</button>
+    {% for cat in categories %}
+      <button class="tab-btn{% if cat == current_category %} active{% endif %}" onclick="window.location.href='?category={{ cat }}'" type="button">{{ cat }}</button>
+    {% endfor %}
+  </div>
+  <div class="product-list" id="productList">
+    {% for item in items %}
+    <div class="card" data-category="{{ item.category }}">
+      <div class="img-wrapper">
+        <img src="{{ item.image_url }}" class="thumb" alt="{{ item.name }}" onclick="showModal(this.src, this.alt)">
+        <span class="zoom-icon" onclick="event.stopPropagation(); showModal(this.previousElementSibling.src, this.previousElementSibling.alt);">
+          <svg viewBox="0 0 18 18"><circle cx="8" cy="8" r="6"/><line x1="13" y1="13" x2="17" y2="17"/></svg>
+        </span>
+        {% if item.quantity == 0 %}
+        <div class="sold-out">SOLD OUT</div>
+        {% endif %}
+      </div>
+      <div class="info">
+        <div class="category">{{ item.category }}</div>
+        <div class="name">{{ item.name }}</div>
+        <div>보유재고: <span class="stock">{{ item.quantity }}</span>개</div>
+        <div>{{ item.description }}</div>
+        <div class="unit-price">생산단가: {{ item.price|int }}원</div>
+      </div>
+      <div class="actions">
+        <input type="number" min="1" max="{{ item.quantity }}" value="1" class="qty" {% if item.quantity == 0 %}disabled{% endif %}>
+        <button onclick="submitRequest({{ item.id }}, this)" {% if item.quantity == 0 %}disabled{% endif %}>신청하기</button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="popup-modal" id="popup-modal">
+    <div class="popup-box">
+      <div class="popup-icon" id="popup-emoji">🎉</div>
+      <div class="popup-title" id="popup-msg">신청이 완료되었습니다</div>
+      <button class="popup-btn" onclick="closePopup()">확인</button>
+    </div>
+  </div>
+  <script>
+    function showModal(src, alt) {
+      const modal = document.createElement("div");
+      modal.id = "img-modal";
+      modal.style.position = "fixed";
+      modal.style.top = "0";
+      modal.style.left = "0";
+      modal.style.width = "100vw";
+      modal.style.height = "100vh";
+      modal.style.background = "rgba(0,0,0,0.6)";
+      modal.style.display = "flex";
+      modal.style.justifyContent = "center";
+      modal.style.alignItems = "center";
+      modal.style.zIndex = 10000;
+      modal.onclick = function (e) {
+        if (e.target === modal) document.body.removeChild(modal);
+      };
+      const img = document.createElement("img");
+      img.src = src;
+      img.alt = alt;
+      img.style.maxWidth = "90%";
+      img.style.maxHeight = "90%";
+      img.style.borderRadius = "18px";
+      modal.appendChild(img);
+      document.body.appendChild(modal);
+    }
+    function showPopup(message, icon) {
+      document.getElementById("popup-msg").textContent = message;
+      document.getElementById("popup-emoji").textContent = icon || "🎉";
+      document.getElementById("popup-modal").classList.add("open");
+    }
+    function closePopup() {
+      document.getElementById("popup-modal").classList.remove("open");
+      location.reload();
+    }
+    async function submitRequest(itemId, btn) {
+      const qtyInput = btn.previousElementSibling;
+      const quantity = parseInt(qtyInput.value, 10);
+      const stockSpan = btn.closest(".card").querySelector(".stock");
+      const res = await fetch("/user/request/ajax", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ item_id: itemId, quantity })
+      });
+      const result = await res.json();
+      if (result.success) {
+        stockSpan.textContent = parseInt(stockSpan.textContent) - quantity;
+        showPopup("주문이 완료되었습니다!", "🎉");
+      } else {
+        showPopup(result.message || "신청 실패", "❗");
+      }
+    }
+  </script>
+</body>
+</html>
+
+

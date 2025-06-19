@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>📦 상품 등록</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { background-color: #fffaf3; font-family: 'Segoe UI', sans-serif; text-align: center; padding: 40px; }
+    h2 { color: #5a4031; margin-bottom: 30px; }
+    form { margin-bottom: 30px; }
+    input, textarea, select { padding: 8px; margin: 5px; border-radius: 5px; border: 1px solid #ccc; width: 200px; }
+    .hidden-input { display: none; margin-left: 10px; }
+    table { margin: 0 auto; border-collapse: collapse; width: 90%; }
+    th, td { border: 1px solid #ddd; padding: 10px; }
+    th { background-color: #ffcc80; }
+    td { background-color: #fffde7; vertical-align: middle; }
+    td input { width: 100%; box-sizing: border-box; }
+    .thumbnail { width: 50px; height: 50px; object-fit: cover; position: relative; }
+    .zoom-icon { position: absolute; top: 0; right: 0; background-color: rgba(255,255,255,0.8); padding: 2px; border-radius: 50%; cursor: pointer; }
+    .price-input-wrapper { display: flex; align-items: center; justify-content: center; gap: 4px; }
+    .price-input-wrapper input { width: 80px; text-align: right; }
+    .btn-edit, .btn-delete, .btn-add {
+      width: 60px; height: 60px; padding: 4px; border: none; border-radius: 16px;
+      cursor: pointer; font-size: 0.95em; font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-weight: 600; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: all 0.2s ease-in-out;
+    }
+    .btn-edit { background-color: #fff3b0; color: #5a4031; }
+    .btn-edit:hover { background-color: #ffe082; }
+    .btn-delete { background-color: #ffcccc; color: #8b2222; }
+    .btn-delete:hover { background-color: #ffaaaa; }
+    .btn-add { background-color: #cde7d8; color: #3b4c3f; margin-left: 10px; }
+    .btn-add:hover { background-color: #b8dbc5; }
+    .btn-emoji { display: block; font-size: 1.5em; line-height: 1.05; }
+    .btn-label { display: block; font-size: 0.85em; margin-top: 4px; }
+    .form-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    #customModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.5); z-index: 9999; justify-content: center; align-items: center; }
+    #customModal .content {
+      background: white; padding: 30px 40px; border-radius: 20px;
+      box-shadow: 0 0 40px #fff8d8; text-align: center;
+    }
+  </style>
+  <script>
+    function openPopup(imageUrl) {
+      const popup = window.open('', 'ImagePopup', 'width=400,height=400');
+      popup.document.write('<img src="' + imageUrl + '" style="width=100%">');
+    }
+    function openModal(icon, message) {
+      document.getElementById('modalIcon').innerText = icon;
+      document.getElementById('modalMessage').innerText = message;
+      document.getElementById('customModal').style.display = 'flex';
+    }
+    function closeModal() {
+      document.getElementById('customModal').style.display = 'none';
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    function handleCategoryChange(select) {
+      const otherInput = document.getElementById('custom-category');
+      if (select.value === '직접입력') {
+        otherInput.style.display = 'inline-block';
+        otherInput.setAttribute('name', 'custom-category');
+      } else {
+        otherInput.style.display = 'none';
+        otherInput.removeAttribute('name');
+      }
+    }
+    window.onload = function () {
+      const params = new URLSearchParams(window.location.search);
+      const message = params.get("message");
+      if (message === "added") openModal("✅", "상품이 등록되었습니다!");
+      else if (message === "updated") openModal("📝", "상품 정보가 수정되었습니다!");
+      else if (message === "deleted") openModal("🗑️", "상품이 삭제되었습니다!");
+    }
+  </script>
+</head>
+<body>
+  <div style="margin-bottom: 18px; text-align: left;">
+    <a href="{{ url_for('dashboard') }}" style="background-color: #ffd180; color: #4e342e; text-decoration: none; padding: 10px 18px; border-radius: 12px; font-weight: bold; box-shadow: 0 2px 6px #ffecb3; display: inline-block;">
+      ⬅️ 이전 화면
+    </a>
+  </div>
+  <h2>📦 상품 등록</h2>
+  <form method="POST" action="/admin/items" enctype="multipart/form-data">
+    <div class="form-row">
+      <input type="text" name="name" placeholder="상품명" required>
+      <select name="category" onchange="handleCategoryChange(this)">
+        <option value="의류">의류</option>
+        <option value="일반잡화">일반잡화</option>
+        <option value="주방용품">주방용품</option>
+        <option value="가방/신발">가방/신발</option>
+        <option value="도서/DVD">도서/DVD</option>
+        <option value="식품/화장품">식품/화장품</option>
+        <option value="가전제품">가전제품</option>
+        <option value="직접입력">직접입력</option>
+      </select>
+      <input type="text" id="custom-category" class="hidden-input" placeholder="카테고리 입력">
+      <input type="number" name="unit_price" placeholder="생산단가" required>
+      <input type="number" name="max_request" placeholder="신청제한수량" required>
+      <input type="text" name="description" placeholder="설명">
+      <input type="number" name="stock" placeholder="재고 수량" required>
+      <input type="file" name="image" accept="image/*">
+      <button type="submit" class="btn-add">
+        <span class="btn-emoji">➕</span>
+        <span class="btn-label">등록</span>
+      </button>
+    </div>
+  </form>
+
+  <table>
+    <tr>
+      <th>상품명</th>
+      <th>카테고리</th>
+      <th>설명</th>
+      <th>재고</th>
+      <th>생산단가</th>
+      <th>제한수량</th>
+      <th>사진</th>
+      <th>저장</th>
+      <th>삭제</th>
+    </tr>
+{% for item in items %}
+<tr>
+  <form method="POST" enctype="multipart/form-data">
+    <td><input type="text" name="name" value="{{ item[1] }}" required></td>
+    <td><input type="text" name="category" value="{{ item[5] or '' }}" required></td>
+    <td><input type="text" name="description" value="{{ item[2] }}"></td>
+    <td><input type="number" name="stock" value="{{ item[3] }}" required></td>
+    <td>
+      <div class="price-input-wrapper">
+        <input type="number" name="unit_price" value="{{ item[4]|int }}" required>
+        <span>원</span>
+      </div>
+    </td>
+    <td><input type="number" name="max_request" value="{{ item[7] or 0 }}" required></td>
+    <td>
+      {% if item[6] %}
+      <div style="position: relative; display: inline-block;">
+        <img src="{{ url_for('static', filename='uploads/' + item[6]|string) }}" class="thumbnail" onerror="this.style.display='none'">
+        <span class="zoom-icon" onclick="openPopup('{{ url_for('static', filename='uploads/' + item[6]|string) }}')">🔍</span>
+      </div>
+      {% else %}
+      -
+      {% endif %}
+      <div style="margin-top: 6px;">
+        <input type="file" name="image" accept="image/*">
+        <small style="font-size: 0.8em; color: #666;">※ 새 이미지 선택 시 기존 이미지가 변경됩니다.</small>
+      </div>
+    </td>
+    <td>
+      <button type="submit" class="btn-edit" formaction="/admin/items/edit/{{ item[0] }}">
+        <span class="btn-emoji">💾</span><span class="btn-label">수정</span>
+      </button>
+    </td>
+    <td>
+      <button type="submit" class="btn-delete" formaction="/admin/items/delete/{{ item[0] }}" onclick="return confirm('정말 삭제하시겠습니까?');">
+        <span class="btn-emoji">❌</span><span class="btn-label">삭제</span>
+      </button>
+    </td>
+  </form>
+</tr>
+{% endfor %}
+
+
+  </table>
+
+  <div id="customModal">
+    <div class="content">
+      <div id="modalIcon" style="font-size:2rem; margin-bottom:10px;">🎉</div>
+      <div id="modalMessage" style="font-size:1.2rem; margin-bottom:15px;">메시지</div>
+      <button onclick="closeModal()">확인</button>
+    </div>
+  </div>
+
+</body>
+</html>
+
+

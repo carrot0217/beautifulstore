@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>📋 관리자 활동 로그</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background-color: #fffaf3;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 40px;
+    }
+    h1 {
+      color: #5d4037;
+      text-align: center;
+    }
+    form {
+      margin-top: 20px;
+      text-align: center;
+    }
+    input, select, button {
+      padding: 8px;
+      margin: 4px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #ffe0b2;
+    }
+    canvas {
+      margin-top: 40px;
+    }
+    .top-back-btn {
+      margin-bottom: 18px;
+      text-align: left;
+    }
+    .top-back-btn a {
+      background-color: #ffd180;
+      color: #4e342e;
+      text-decoration: none;
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-weight: bold;
+      box-shadow: 0 2px 6px #ffecb3;
+      display: inline-block;
+    }
+    .download-link {
+      display: inline-block;
+      margin: 20px 0;
+      text-decoration: none;
+      background-color: #ffcc80;
+      color: #333;
+      padding: 8px 16px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ✅ 이전 화면 버튼 추가 -->
+  <div class="top-back-btn">
+    <a href="{{ url_for('dashboard') }}">⬅️ 이전 화면</a>
+  </div>
+
+  <h1>📋 관리자 활동 로그</h1>
+
+  <form method="GET" action="{{ url_for('admin_logs') }}">
+    <input type="text" name="actor" placeholder="행위자 검색" value="{{ request.args.get('actor', '') }}">
+    <input type="text" name="target" placeholder="대상자 검색" value="{{ request.args.get('target', '') }}">
+    <select name="action">
+      <option value="">행동 선택</option>
+      <option value="사용자 등록" {% if request.args.get('action') == '사용자 등록' %}selected{% endif %}>사용자 등록</option>
+      <option value="관리자 권한 변경" {% if request.args.get('action') == '관리자 권한 변경' %}selected{% endif %}>관리자 권한 변경</option>
+      <option value="사용자 삭제" {% if request.args.get('action') == '사용자 삭제' %}selected{% endif %}>사용자 삭제</option>
+      <option value="로그인 성공" {% if request.args.get('action') == '로그인 성공' %}selected{% endif %}>로그인 성공</option>
+      <option value="로그인 실패" {% if request.args.get('action') == '로그인 실패' %}selected{% endif %}>로그인 실패</option>
+    </select>
+    <input type="date" name="start_date" value="{{ request.args.get('start_date', '') }}">
+    <input type="date" name="end_date" value="{{ request.args.get('end_date', '') }}">
+    <button type="submit">검색</button>
+  </form>
+
+  <a class="download-link" href="{{ url_for('download_logs', **request.args) }}">📥 엑셀 다운로드</a>
+
+  <canvas id="dailyChart" width="600" height="300"></canvas>
+  <canvas id="actionChart" width="600" height="300"></canvas>
+
+  <table>
+    <tr>
+      <th>시간</th>
+      <th>행위자</th>
+      <th>대상자</th>
+      <th>행동</th>
+    </tr>
+    {% for log in logs %}
+    <tr>
+      <td>{{ log[3] }}</td>
+      <td>{{ log[1] }}</td>
+      <td>{{ log[2] or 'N/A' }}</td>
+      <td>{{ log[0] }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const dailyData = {{ daily_data|tojson }};
+    const actionData = {{ action_data|tojson }};
+
+    new Chart(document.getElementById('dailyChart'), {
+      type: 'bar',
+      data: {
+        labels: dailyData.map(d => d.date),
+        datasets: [{
+          label: '📅 일별 로그 수',
+          data: dailyData.map(d => d.count),
+          backgroundColor: 'rgba(255, 159, 64, 0.7)',
+          borderColor: 'rgba(255, 159, 64, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1 }
+          }
+        }
+      }
+    });
+
+    new Chart(document.getElementById('actionChart'), {
+      type: 'pie',
+      data: {
+        labels: actionData.map(d => d.action),
+        datasets: [{
+          label: '📌 행동별 로그 비율',
+          data: actionData.map(d => d.count),
+          backgroundColor: [
+            '#ffcc80', '#f48fb1', '#81d4fa', '#c5e1a5', '#ce93d8'
+          ]
+        }]
+      }
+    });
+  </script>
+</body>
+</html>
+

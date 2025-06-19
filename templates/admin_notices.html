@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>공지사항 관리</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #fffaf3;
+      padding: 40px;
+    }
+    h1 {
+      color: #5a4031;
+    }
+    form {
+      margin-bottom: 30px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      margin-bottom: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      background-color: #ffcc80;
+      border: none;
+      padding: 10px 20px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .notice-card {
+      background: white;
+      padding: 16px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 6px #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .notice-info {
+      flex-grow: 1;
+    }
+    .notice-img {
+      margin-top: 8px;
+    }
+    .delete-form {
+      margin-left: 20px;
+    }
+    .delete-form button {
+      background-color: #e57373;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <h1>📢 공지사항 등록</h1>
+  <form method="POST" enctype="multipart/form-data">
+    <label>제목</label>
+    <input type="text" name="title" required>
+
+    <label>내용</label>
+    <textarea name="content" rows="5"></textarea>
+
+    <label>이미지 (선택)</label>
+    <input type="file" name="image">
+
+    <button type="submit">등록</button>
+  </form>
+
+  <h2>📄 최근 공지사항</h2>
+  {% for notice in notices %}
+  <div class="notice-card">
+    <div class="notice-info">
+      <strong>{{ notice[1] }}</strong> <small>{{ notice[3].strftime('%Y-%m-%d') }}</small><br>
+      {% if notice[2] %}
+        <img class="notice-img" src="{{ url_for('static', filename='uploads/' + notice[2]) }}" style="width:120px;">
+      {% endif %}
+    </div>
+    <form method="POST" action="{{ url_for('delete_notice', notice_id=notice[0]) }}" class="delete-form" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+      <button type="submit">삭제</button>
+    </form>
+  </div>
+  {% endfor %}
+</body>
+</html>
+

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>📦 입고 일정 전체 보기</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background-color: #fffaf3;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 40px;
+      color: #5a4031;
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 30px;
+    }
+    table {
+      margin: 0 auto;
+      border-collapse: collapse;
+      width: 80%;
+      background-color: #fffaf3;
+    }
+    th, td {
+      border: 1px solid #d7ccc8;
+      padding: 12px;
+    }
+    th {
+      background-color: #ffcc80;
+      color: #5a4031;
+      font-weight: bold;
+    }
+    td {
+      background-color: #fffaf0;
+    }
+    .status {
+      color: #1565c0;
+      font-weight: bold;
+    }
+    .btn-back {
+      display: inline-block;
+      margin-top: 40px;
+      padding: 10px 20px;
+      background-color: #ffd54f;
+      color: #5a4031;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>📦 입고 일정 (7일 이내)</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>품목명</th>
+        <th>수량</th>
+        <th>상태</th>
+        <th>배송일</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for entry in schedule %}
+        <tr>
+          <td>{{ entry.name }}</td>
+          <td>{{ entry.quantity }}</td>
+          <td class="status">배송중 🚚</td>
+          <td>{{ entry.delivery_date }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <a href="{{ url_for('user_home') }}" class="btn-back">← 돌아가기</a>
+</body>
+</html>
+

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>📊 재고 수량 차트</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #fffaf3;
+      padding: 30px;
+      text-align: center;
+    }
+    h1 {
+      color: #5a4031;
+      margin-bottom: 20px;
+    }
+    .filter-form {
+      margin-bottom: 20px;
+    }
+    .filter-form input[type="date"] {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background-color: #ffe0b2;
+      margin: 0 5px;
+    }
+    .filter-form button {
+      padding: 6px 16px;
+      background-color: #ffcc80;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ✅ 이전 화면 버튼 -->
+  <div style="margin-bottom: 18px; text-align: left;">
+    <a href="{{ url_for('dashboard') }}" style="
+        background-color: #ffd180;
+        color: #4e342e;
+        text-decoration: none;
+        padding: 10px 18px;
+        border-radius: 12px;
+        font-weight: bold;
+        box-shadow: 0 2px 6px #ffecb3;
+        display: inline-block;
+    ">⬅️ 이전 화면</a>
+  </div>
+
+  <h1>📦 재고 수량 현황</h1>
+  <form class="filter-form" method="get" action="/admin/items/chart">
+    <label for="start_date">시작일:</label>
+    <input type="date" id="start_date" name="start_date" value="{{ request.args.get('start_date', '') }}">
+
+    <label for="end_date">종료일:</label>
+    <input type="date" id="end_date" name="end_date" value="{{ request.args.get('end_date', '') }}">
+
+    <button type="submit">조회</button>
+  </form>
+
+  <canvas id="stockChart" width="600" height="300"></canvas>
+  <script>
+    const ctx = document.getElementById('stockChart').getContext('2d');
+    const stockChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: {{ labels|tojson }},
+        datasets: [{
+          label: '재고 수량',
+          data: {{ values|tojson }},
+          backgroundColor: 'rgba(255, 159, 64, 0.7)',
+          borderColor: 'rgba(255, 159, 64, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

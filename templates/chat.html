@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>채팅</title>
+  <style>
+    #chat-box { height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+    .msg { margin-bottom: 6px; }
+    .msg span { color: #888; font-size: 0.85em; }
+  </style>
+</head>
+<body>
+  <div id="chat-box"></div>
+
+  <form id="chat-form">
+    <input type="text" id="sender" placeholder="이름" required>
+    <input type="text" id="message" placeholder="메시지 입력" required>
+    <button type="submit">전송</button>
+  </form>
+
+  <script>
+    async function loadMessages() {
+      const res = await fetch('/chat/messages');
+      const data = await res.json();
+      const box = document.getElementById('chat-box');
+      box.innerHTML = '';
+      data.messages.forEach(msg => {
+        const div = document.createElement('div');
+        div.className = 'msg';
+        div.innerHTML = `<b>${msg.sender}</b>: ${msg.content} <span>${msg.created_at}</span>`;
+        box.appendChild(div);
+      });
+      box.scrollTop = box.scrollHeight;
+    }
+
+    document.getElementById('chat-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const sender = document.getElementById('sender').value;
+      const message = document.getElementById('message').value;
+      await fetch('/chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ sender, content: message })
+      });
+      document.getElementById('message').value = '';
+      loadMessages();
+    });
+
+    setInterval(loadMessages, 2000);  // 2초마다 새로고침
+    loadMessages();
+  </script>
+</body>
+</html>
