@@ -819,26 +819,24 @@ def user_home():
     """, (username,))
     messages = cur.fetchall()
 
-    # 🔹 최근 상품 10개
-    cur.execute("""
-        SELECT id, name, unit_price, image
-        FROM items
-        WHERE quantity > 0
-        ORDER BY id DESC
-        LIMIT 10
-    """)
-    items = [
-        {
-            "id": row[0],
-            "name": row[1],
-            "price": row[2],
-            "image_url": f"/static/uploads/{row[3]}" if row[3] else "/static/img/noimage.png"
-        }
-        for row in cur.fetchall()
-    ]
+# 🔹 최근 상품 10개
+cur.execute("""
+    SELECT id, name, unit_price, image
+    FROM items
+    WHERE quantity > 0
+    ORDER BY id DESC
+    LIMIT 10
+""")
+items = [
+    {
+        "id": row[0],
+        "name": row[1],
+        "price": int(row[2]) if row[2] else 0,
+        "image_url": f"/static/uploads/{row[3]}" if row[3] else "/static/img/noimage.png"
+    }
+    for row in cur.fetchall()
+]
 
-    today = datetime.today().date()
-    seven_days_later = today + timedelta(days=7)
 
     # 🔹 입고 일정
     cur.execute("""
