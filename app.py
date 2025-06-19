@@ -798,6 +798,10 @@ def user_home():
     store_name = session.get('store_name', '')
     print("대입된 store_name:", store_name)
 
+    # ✅ 날짜 변수 추가
+    today = datetime.today().date()
+    seven_days_later = today + timedelta(days=7)
+
     conn = get_connection()
     cur = conn.cursor()
 
@@ -821,22 +825,21 @@ def user_home():
 
     # 🔹 최근 상품 10개
     cur.execute("""
-    SELECT id, name, unit_price, image
-    FROM items
-    WHERE quantity > 0
-    ORDER BY id DESC
-    LIMIT 10
+        SELECT id, name, unit_price, image
+        FROM items
+        WHERE quantity > 0
+        ORDER BY id DESC
+        LIMIT 10
     """)
     items = [
-    {
-        "id": row[0],
-        "name": row[1],
-        "price": int(row[2]) if row[2] else 0,
-        "image_url": f"/static/uploads/{row[3]}" if row[3] else "/static/img/noimage.png"
-    }
-    for row in cur.fetchall()
-]
-
+        {
+            "id": row[0],
+            "name": row[1],
+            "price": int(row[2]) if row[2] else 0,
+            "image_url": f"/static/uploads/{row[3]}" if row[3] else "/static/img/noimage.png"
+        }
+        for row in cur.fetchall()
+    ]
 
     # 🔹 입고 일정
     cur.execute("""
@@ -885,7 +888,7 @@ def user_home():
     """)
     notices = cur.fetchall()
 
-    # ✅ 🔹 비품 4개만 가져오기
+    # 🔹 비품 4개만 가져오기
     cur.execute("SELECT * FROM equipments ORDER BY id DESC LIMIT 4")
     equipments = cur.fetchall()
 
@@ -902,8 +905,9 @@ def user_home():
         recipients=recipients,
         messages=messages,
         notices=notices,
-        equipments=equipments  # ✅ 비품 전달
+        equipments=equipments
     )
+
 # ----------------------- 관리자페이지 비품요청 라우트 ----------------------
 @app.route('/admin/equipments')
 def admin_equipments():
