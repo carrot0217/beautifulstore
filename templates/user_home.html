@@ -84,321 +84,20 @@
       margin-bottom: 30px;
       transition: box-shadow 0.2s ease, transform 0.2s ease;
     }
-.item-card {
-  width: 150px;
-  background-color: #fffef5;
-  border: 1px solid #eee;
-  border-radius: 14px;
-  padding: 10px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(224, 215, 192, 0.7);
-  height: 260px; /* 높이 줄이기 */
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-.item-card img {
-  max-height: 100px;
-  object-fit: contain;
-  margin-bottom: 8px;
-}
-.item-card h3 {
-  font-size: 0.95em;
-  margin: 4px 0;
-}
-.item-card p {
-  font-size: 0.9em;
-  margin: 2px 0;
-}
-.quantity-submit {
-  margin-top: 6px;
-  gap: 6px;
-}
-    .btn-see-all {
-      float: right;
-      font-size: 0.85em;
-      padding: 6px 12px;
-      background-color: #ffd54f;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background-color 0.2s ease;
+    .order-history-entry {
+      padding: 4px 0;
+      font-size: 0.95em;
+      color: #444;
     }
-    .btn-see-all:hover {
-      background-color: #ffcc33;
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.6);
-      justify-content: center;
-      align-items: center;
-      z-index: 999;
-    }
-    .modal-content {
-      background: #fffaf0;
-      border-radius: 16px;
-      padding: 30px;
-      width: 340px;
-      box-shadow: 0 0 20px #aaa4;
-      color: #5a4031;
+    .footer {
       text-align: center;
-      position: relative;
+      font-size: 0.9em;
+      color: #888;
+      margin-top: 30px;
     }
-    .image-container {
-      position: relative;
-      display: inline-block;
-    }
-    .item-image {
-      width: 100%;
-      border-radius: 10px;
-      margin-bottom: 10px;
-    }
-    .zoom-button {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      background-color: #ffe082;
-      border: none;
-      border-radius: 50%;
-      padding: 4px 8px;
-      font-size: 14px;
-      cursor: pointer;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-    }
-    .apply-btn, .close-btn {
-      background-color: #ffb74d;
-      border: none;
-      border-radius: 6px;
-      padding: 6px 12px;
-      margin: 5px;
-      cursor: pointer;
-      font-weight: bold;
-      color: #5a4031;
-    }
-    #zoomModal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0,0,0,0.7);
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    .zoomed-img {
-      max-width: 90%;
-      max-height: 90%;
-      border-radius: 12px;
-      box-shadow: 0 0 16px #fff;
-    }
-    #modalItemPrice {
-      font-weight: bold;
-      color: #0d47a1;
-    }
-    #modalItemQty {
-      font-weight: bold;
-      color: #c62828;
-    }
-#modalQuantity {
-  width: 80px;
-  padding: 8px 12px;
-  font-size: 1em;
-  border: 2px solid #ffcc80;
-  border-radius: 8px;
-  background-color: #fffaf0;
-  color: #5a4031;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-#modalQuantity:focus {
-  border-color: #ffb74d;
-  box-shadow: 0 0 6px rgba(255, 183, 77, 0.4);
-}
-  .custom-request-btn {
-    padding: 8px 14px;
-    border-radius: 10px;
-    background-color: #ffcc80;
-    color: #4e342e;
-    font-weight: bold;
-    font-size: 0.9em;
-    border: none;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-  .custom-request-btn:hover {
-    background-color: #ffb74d;
-  }
-  .quantity-submit {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    margin-top: 8px;
-  }
-  .quantity-submit input[type="number"] {
-    width: 50px;
-    padding: 6px;
-    border-radius: 6px;
-    border: 2px solid #ffcc80;
-    background-color: #fffaf0;
-    text-align: center;
-    font-weight: bold;
-    color: #5a4031;
-  }
-  .custom-request-btn {
-    padding: 8px 14px;
-    border-radius: 10px;
-    background-color: #ffcc80;
-    color: #4e342e;
-    font-weight: bold;
-    font-size: 0.9em;
-    border: none;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-  .custom-request-btn:hover {
-    background-color: #ffb74d;
-  }
-.custom-alert {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100vw; height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-.custom-alert-content {
-  background: #fffaf0;
-  padding: 30px;
-  border-radius: 14px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-  text-align: center;
-  color: #5a4031;
-  font-size: 1.1em;
-  font-weight: bold;
-}
-
-.custom-alert-content button {
-  margin-top: 20px;
-  padding: 8px 20px;
-  border: none;
-  background-color: #ffb74d;
-  color: #4e342e;
-  font-weight: bold;
-  border-radius: 10px;
-  cursor: pointer;
-}
-  .image-container {
-    position: relative;
-  }
-  .zoom-button {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    background-color: #ffe082;
-    border: none;
-    border-radius: 50%;
-    padding: 4px 8px;
-    font-size: 14px;
-    cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-  }
-  .modal#zoomModal {
-    display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.6);
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-  }
-  .zoomed-img {
-    max-width: 90%;
-    max-height: 90%;
-    border-radius: 12px;
-    box-shadow: 0 0 16px #fff;
-  }
-.logout-button {
-  background-color: #fff3e0;
-  color: #5a4031;
-  font-weight: bold;
-  padding: 6px 12px;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  transition: background 0.2s;
-}
-.logout-button:hover {
-  background-color: #ffe0b2;
-}
-<style>
-  /* ... 기존 CSS 유지 ... */
-
-   /* ✅ 반응형 스타일 추가 */
-    @media screen and (max-width: 768px) {
-      .top-bar {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      .user-info-box {
-        align-items: flex-start;
-        margin-top: 10px;
-      }
-      .content {
-        flex-direction: column;
-        padding: 10px 16px;
-        gap: 20px;
-      }
-      .item-card {
-        width: 100% !important;
-        min-width: auto !important;
-      }
-      .btn-see-all {
-        float: none;
-        display: block;
-        width: 100%;
-        margin-top: 8px;
-      }
-      .section {
-        padding: 16px;
-      }
-      .quantity-submit {
-        flex-direction: column;
-        gap: 6px;
-      }
-      .clock-box {
-        font-size: 0.9em;
-        padding: 4px 10px;
-      }
-      .logout-button {
-        width: 100%;
-      }
-      .popup-box {
-        width: 90% !important;
-      }
-      .modal-content {
-        width: 90% !important;
-      }
-    }
-
   </style>
+</head>
+<body>
 
 <div class="top-bar">
   <div class="logo">아름다운가게</div>
@@ -414,7 +113,6 @@
 </div>
 
 <div class="content">
-  <!-- 좌측 영역 -->
   <div class="left-panel">
     <div class="section">
       <h2>🧸 상품 둘러보기
@@ -493,6 +191,7 @@ function submitEquipmentRequest(equipmentId) {
     else alert(data.message);
   });
 }
+  </div>
   <div class="right-panel">
     <div class="section">
       <h2>📦 입고 일정
@@ -523,7 +222,6 @@ function submitEquipmentRequest(equipmentId) {
     <div class="footer">릴라스테이션 ©2025 Created by carrot0217</div>
   </div>
 </div>
-  </div>
   <div class="modal" id="requestModal">
     <div class="modal-content">
       <h3 id="modalItemName">상품명</h3>
