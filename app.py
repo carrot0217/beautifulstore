@@ -795,105 +795,115 @@ def user_home():
         return redirect(url_for('login'))
 
     username = session['user_id']
-    store_name = session.get('store_name') or '사용자'
+    store_name = session.get('store_name', '') or ''
     print("대입된 store_name:", store_name)
 
-    # ✅ 날짜 변수 추가
-    today = datetime.today().date()
+    today = date.today()
     seven_days_later = today + timedelta(days=7)
 
-    conn = get_connection()
-    cur = conn.cursor()
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
 
-    # 🔹 관리자 포함 모든 사용자 (단, 본인 제외 + 매장명 있는 사용자만)
-    cur.execute("""
-        SELECT username, store_name, is_admin
-        FROM users
-        WHERE username != %s AND store_name IS NOT NULL AND store_name != ''
-        ORDER BY is_admin DESC, store_name ASC
-    """, (username,))
-    recipients = cur.fetchall()
+        # 사용자 리스트
+        cur.execute("""
+            SELECT username, store_name, is_admin
+            FROM users
+            WHERE username != %s AND store_name IS NOT NULL AND store_name != ''
+            ORDER BY is_admin DESC, store_name ASC
+        """, (username,))
+        recipients = cur.fetchall()
 
-    # 🔹 받은 쪽지 목록
-    cur.execute("""
-        SELECT sender, content, created_at
-        FROM messages
-        WHERE recipient = %s
-        ORDER BY created_at DESC
-    """, (username,))
-    messages = cur.fetchall()
+        # 받은 쪽지
+        cur.execute("""
+            SELECT sender, content, created_at
+            FROM messages
+            WHERE recipient = %s
+            ORDER BY created_at DESC
+        """, (username,))
+        messages = cur.fetchall()
 
-    # 🔹 최근 상품 10개
-    cur.execute("""
-        SELECT id, name, unit_price, image
-        FROM items
-        WHERE quantity > 0
-        ORDER BY id DESC
-        LIMIT 10
-    """)
-    items = [
-        {
-            "id": row[0],
-            "name": row[1],
-            "price": int(row[2]) if row[2] else 0,
-            "image_url": f"/static/uploads/{row[3]}" if row[3] else "/static/img/noimage.png"
-        }
-        for row in cur.fetchall()
-    ]
+        # 최근 상품 10개
+        cur.execute("""
+            SELECT id, name, unit_price, image
+            FROM items
+            WHERE quantity > 0
+            ORDER BY id DESC
+            LIMIT 10
+        """)
+        items = [
+            {
+                "id": row[0],
+                "name": row[1],
+                "price": int(row[2]) if row[2] else 0,
+                "image_url": f"/static/uploads/{row[3]}" if row[3] else "/static/img/noimage.png"
+            }
+            for row in cur.fetchall()
+        ]
 
-    # 🔹 입고 일정
-    cur.execute("""
-        SELECT i.name, o.quantity, o.delivery_date
-        FROM orders o
-        JOIN items i ON CAST(o.item AS INTEGER) = i.id
-        WHERE o.status = '완료'
-          AND o.user_id = %s
-          AND o.delivery_date BETWEEN %s AND %s
-        ORDER BY o.delivery_date ASC
-    """, (username, today, seven_days_later))
-    schedule = [
-        {
-            "name": row[0],
-            "quantity": row[1],
-            "delivery_date": row[2].strftime("%Y-%m-%d") if row[2] else ""
-        }
-        for row in cur.fetchall()
-    ]
+        # 입고 일정
+        cur.execute("""
+            SELECT i.name, o.quantity, o.delivery_date
+            FROM orders o
+            JOIN items i ON CAST(o.item AS INTEGER) = i.id
+            WHERE o.status = '완료'
+              AND o.user_id = %s
+              AND o.delivery_date BETWEEN %s AND %s
+            ORDER BY o.delivery_date ASC
+        """, (username, today, seven_days_later))
+        schedule = [
+            {
+                "name": row[0],
+                "quantity": row[1],
+                "delivery_date": row[2].strftime("%Y-%m-%d") if row[2] else ""
+            }
+            for row in cur.fetchall()
+        ]
 
-    # 🔹 최근 3일 주문
-    three_days_ago = datetime.now() - timedelta(days=3)
-    cur.execute("""
-        SELECT i.name, o.quantity, o.created_at
-        FROM orders o
-        JOIN items i ON CAST(o.item AS INTEGER) = i.id
-        WHERE o.user_id = %s AND o.created_at >= %s
-        ORDER BY o.created_at DESC
-        LIMIT 3
-    """, (username, three_days_ago))
-    recent_orders = [
-        {
-            "name": row[0],
-            "quantity": row[1],
-            "order_date": row[2].strftime("%Y-%m-%d")
-        }
-        for row in cur.fetchall()
-    ]
+        # 최근 3일 주문
+        three_days_ago = datetime.now() - timedelta(days=3)
+        cur.execute("""
+            SELECT i.name, o.quantity, o.created_at
+            FROM orders o
+            JOIN items i ON CAST(o.item AS INTEGER) = i.id
+            WHERE o.user_id = %s AND o.created_at >= %s
+            ORDER BY o.created_at DESC
+            LIMIT 3
+        """, (username, three_days_ago))
+        recent_orders = [
+            {
+                "name": row[0],
+                "quantity": row[1],
+                "order_date": row[2].strftime("%Y-%m-%d")
+            }
+            for row in cur.fetchall()
+        ]
 
-    # 🔹 공지사항 3개 가져오기
-    cur.execute("""
-        SELECT id, title, image, created_at
-        FROM notices
-        ORDER BY created_at DESC
-        LIMIT 3
-    """)
-    notices = cur.fetchall()
+        # 공지사항 3개
+        cur.execute("""
+            SELECT id, title, image, created_at
+            FROM notices
+            ORDER BY created_at DESC
+            LIMIT 3
+        """)
+        notices = cur.fetchall()
 
-    # 🔹 비품 4개만 가져오기
-    cur.execute("SELECT * FROM equipments ORDER BY id DESC LIMIT 4")
-    equipments = cur.fetchall()
+        # 비품 4개
+        cur.execute("SELECT * FROM equipments ORDER BY id DESC LIMIT 4")
+        equipments = cur.fetchall()
 
-    cur.close()
-    conn.close()
+        cur.close()
+        conn.close()
+
+    except Exception as e:
+        print("🔥 user_home 에러:", str(e))
+        items = []
+        equipments = []
+        notices = []
+        schedule = []
+        recent_orders = []
+        recipients = []
+        messages = []
 
     return render_template(
         'user_home.html',
