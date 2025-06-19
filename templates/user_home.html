@@ -106,7 +106,7 @@
   <div class="top-bar">
     <div class="logo">아름다운가게</div>
     <div class="user-info-box">
-      <div class="user-name">{{ store_name }}님 어서오세요</div>
+      <div class="user-name">{{ store_name or '사용자' }}님 어서오세요</div>
       <div style="display: flex; gap: 10px; align-items: center;">
         <div id="clock" class="clock-box">--:--</div>
         <a href="{{ url_for('logout') }}"><button class="logout-button">로그아웃</button></a>
@@ -171,13 +171,14 @@
       </div>
       <div class="section">
         <h2>✉ 받은 쪽지함</h2>
-        {% if messages %}
-           {% for msg in messages[:3] %}
-          <div>📨 <strong>{{ msg[0] }}</strong>: {{ msg[1] }}</div>
+        {% if messages and messages|length > 0 %}
+          {% for msg in messages[:3] %}
+            <div>📨 <strong>{{ msg.sender }}</strong>: {{ msg.content }}</div>
+          {% endfor %}
+          <a href="{{ url_for('inbox') }}" class="btn" style="margin-top:10px; display:inline-block;">전체 보기</a>
         {% else %}
           <div>받은 쪽지가 없습니다.</div>
-        {% endfor %}
-        <a href="{{ url_for('inbox') }}" class="btn" style="margin-top:10px; display:inline-block;">전체 보기</a>
+        {% endif %}
       </div>
     </div>
   </div>
