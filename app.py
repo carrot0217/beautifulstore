@@ -795,7 +795,7 @@ def user_home():
         return redirect(url_for('login'))
 
     username = session['user_id']
-    store_name = session.get('store_name', '')
+    store_name = session.get('store_name') or '사용자'
     print("대입된 store_name:", store_name)
 
     # ✅ 날짜 변수 추가
