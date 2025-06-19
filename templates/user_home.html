@@ -153,6 +153,7 @@
     </div>
   </div>
 
+<!-- 📦 새로운 상품 -->
 <div class="section">
   <h2>
     📦 새로운 상품!
@@ -171,69 +172,72 @@
   </div>
 </div>
 
-    <div class="section">
- <h2>
-  🚚 입고 일정
-  <a href="/user/incoming" class="btn-small" style="margin-left:auto;">더보기</a>
-</h2>
-      {% if schedule %}
-        <ul>
-          {% for s in schedule %}
-            <li>{{ s.delivery_date }} - {{ s.name }} ({{ s.quantity }}개)</li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p>예정된 입고 일정이 없습니다.</p>
-      {% endif %}
-    </div>
+<!-- 🚚 입고 일정 -->
+<div class="section">
+  <h2>
+    🚚 입고 일정
+    <a href="/user/incoming" class="btn-small" style="margin-left:auto;">더보기</a>
+  </h2>
+  {% if schedule %}
+    <ul>
+      {% for s in schedule %}
+        <li>{{ s.delivery_date }} - {{ s.name }} ({{ s.quantity }}개)</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>예정된 입고 일정이 없습니다.</p>
+  {% endif %}
+</div>
 
-    <div class="section">
-      <h2>
-  🧾 최근 주문
-  <a href="/user/orders" class="btn-small" style="margin-left:auto;">더보기</a>
-</h2>
-      {% if recent_orders %}
-        <ul>
-          {% for order in recent_orders %}
-            <li>{{ order.order_date }} - {{ order.name }} ({{ order.quantity }}개)</li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p>최근 주문 내역이 없습니다.</p>
-      {% endif %}
-    </div>
+<!-- 🧾 최근 주문 -->
+<div class="section">
+  <h2>
+    🧾 최근 주문
+    <a href="/user/orders" class="btn-small" style="margin-left:auto;">더보기</a>
+  </h2>
+  {% if recent_orders %}
+    <ul>
+      {% for order in recent_orders %}
+        <li>{{ order.order_date }} - {{ order.name }} ({{ order.quantity }}개)</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>최근 주문 내역이 없습니다.</p>
+  {% endif %}
+</div>
 
-    <div class="section">
-      <h2>📢 공지사항</h2>
-      {% if notices %}
-        <ul>
-          {% for n in notices %}
-            <li>{{ n[1] }} ({{ n[3].strftime('%Y-%m-%d') }})</li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p>공지사항이 없습니다.</p>
-      {% endif %}
-    </div>
+<!-- 📢 공지사항 -->
+<div class="section">
+  <h2>📢 공지사항</h2>
+  {% if notices %}
+    <ul>
+      {% for n in notices %}
+        <li>{{ n[1] }} ({{ n[3].strftime('%Y-%m-%d') }})</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>공지사항이 없습니다.</p>
+  {% endif %}
+</div>
 
-    <div class="section">
-      <h2>
-  🛠 비품 요청
-  <a href="/user/equipments" class="btn-small" style="margin-left:auto;">더보기</a>
-</h2>
-      <div class="card-grid">
-        {% for eq in equipments %}
-          <div class="card">
-            <img src="/static/uploads/{{ eq.image_filename or 'noimage.png' }}" alt="{{ eq.name }}">
-            <div class="card-name">{{ eq.name }}</div>
-            <div class="card-price">{{ eq.unit_price | round | int }}원 | 재고: {{ eq.stock }}</div>
-            <input type="number" id="quantity_{{ eq.id }}" min="1" max="99" value="1" style="width: 60px;">
-            <button class="btn" onclick="submitEquipmentRequest({{ eq.id }})">신청하기</button>
-          </div>
-        {% endfor %}
+<!-- 🛠 비품 요청 -->
+<div class="section">
+  <h2>
+    🛠 비품 요청
+    <a href="/user/equipments" class="btn-small" style="margin-left:auto;">더보기</a>
+  </h2>
+  <div class="card-grid">
+    {% for eq in equipments %}
+      <div class="card">
+        <img src="/static/uploads/{{ eq.image_filename or 'noimage.png' }}" alt="{{ eq.name }}">
+        <div class="card-name">{{ eq.name }}</div>
+        <div class="card-price">{{ eq.unit_price | round | int }}원 | 재고: {{ eq.stock }}</div>
+        <input type="number" id="quantity_{{ eq.id }}" min="1" max="99" value="1" style="width: 60px;">
+        <button class="btn" onclick="submitEquipmentRequest({{ eq.id }})">신청하기</button>
       </div>
-    </div>
-
+    {% endfor %}
+  </div>
+</div>
     <div class="section">
       <h2>📨 쪽지함</h2>
       <div class="msg-tab-buttons">
