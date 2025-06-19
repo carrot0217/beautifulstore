@@ -1705,37 +1705,6 @@ def delete_notice(notice_id):
     flash("✅ 공지사항이 삭제되었습니다.")
     return redirect(url_for('admin_notices'))
 
-# ----------------------- 수동 실행용 임시라우트 -----------------------
-@app.route('/admin/init_equipment_tables')
-def init_equipment_tables():
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS equipments (
-            id SERIAL PRIMARY KEY,
-            name TEXT NOT NULL,
-            unit_price INTEGER,
-            stock INTEGER,
-            image_filename TEXT,
-            description TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS equipment_requests (
-            id SERIAL PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            equipment_id INTEGER REFERENCES equipments(id),
-            quantity INTEGER NOT NULL,
-            request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            status TEXT DEFAULT '대기중'
-        );
-    """)
-    conn.commit()
-    cur.close()
-    conn.close()
-    return "테이블 생성 완료!"
 # ----------------------- 비품등록 처리 라우트 -----------------------
 @app.route('/admin/equipment/add', methods=['POST'])
 def add_equipment():
