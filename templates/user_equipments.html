@@ -2,111 +2,111 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>📎 비품 등록</title>
+  <title>비품 목록</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
-      background-color: #fffaf3;
       font-family: 'Segoe UI', sans-serif;
-      padding: 40px;
+      background-color: #fffaf3;
+      margin: 0;
+      padding: 30px;
     }
     h1 {
-      font-size: 1.8em;
+      text-align: center;
       color: #5a4031;
-      margin-bottom: 20px;
+      margin-bottom: 30px;
     }
-    form {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 20px;
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 20px;
     }
-    input[type="text"], input[type="file"] {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    button {
-      background-color: #ffc107;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #ffb300;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background-color: white;
-      box-shadow: 0 2px 10px #eee;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    th, td {
+    .card {
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       padding: 14px;
       text-align: center;
-      border-bottom: 1px solid #eee;
     }
-    th {
-      background-color: #ffeb99;
+    .card img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .card-name {
+      margin: 10px 0 4px;
+      font-weight: bold;
+      font-size: 1em;
+    }
+    .card-price {
+      font-size: 0.9em;
+      color: #777;
+      margin-bottom: 10px;
+    }
+    .card input[type="number"] {
+      width: 60px;
+      padding: 4px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-bottom: 8px;
+    }
+    .btn {
+      padding: 6px 12px;
+      background-color: #ffd54f;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn:hover {
+      background-color: #ffcc4d;
+    }
+    .back-btn {
+      margin-top: 30px;
+      display: inline-block;
+      padding: 8px 14px;
+      background-color: #ffe082;
+      border-radius: 8px;
+      font-weight: bold;
+      text-decoration: none;
       color: #5a4031;
     }
-    img {
-      width: 40px;
-      height: auto;
+    .back-btn:hover {
+      background-color: #ffcc80;
     }
   </style>
 </head>
 <body>
-  <h1>📎 비품 등록</h1>
+  <h1>🛠 비품 신청 목록</h1>
 
-  <!-- 비품 등록 폼 -->
-  <form method="POST" action="/admin/equipment/add" enctype="multipart/form-data">
-    <input type="text" name="name" placeholder="비품명" required>
-    <input type="file" name="image" accept="image/*">
-    <button type="submit">등록</button>
-  </form>
+  <div class="card-grid">
+    {% for eq in equipments %}
+      <div class="card">
+        <img src="/static/uploads/{{ eq.image_filename or 'noimage.png' }}" alt="{{ eq.name }}">
+        <div class="card-name">{{ eq.name }}</div>
+        <div class="card-price">{{ eq.unit_price | round | int }}원 | 재고: {{ eq.stock }}</div>
+        <input type="number" id="quantity_{{ eq.id }}" min="1" max="99" value="1">
+        <button class="btn" onclick="submitEquipmentRequest({{ eq.id }})">신청하기</button>
+      </div>
+    {% endfor %}
+  </div>
 
-  <!-- 선택 삭제 폼 -->
-  <form method="POST" action="/admin/equipment/delete" id="deleteForm">
-    <button type="submit">선택 삭제</button>
-  </form>
-
-  <!-- 비품 목록 테이블 -->
-  <table>
-    <thead>
-      <tr>
-        <th><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
-        <th>사진</th>
-        <th>비품명</th>
-        <th>단가</th>
-        <th>수량</th>
-        <th>등록일</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for eq in equipments %}
-        <tr>
-          <td><input type="checkbox" name="delete_ids" form="deleteForm" value="{{ eq.id }}"></td>
-          <td><img src="/static/uploads/{{ eq.image_filename or 'noimage.png' }}"></td>
-          <td>{{ eq.name }}</td>
-          <td>{{ eq.unit_price | int }}원</td>
-          <td>{{ eq.stock }}</td>
-          <td>{{ eq.created_at.strftime('%Y-%m-%d') }}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div style="text-align:center;">
+    <a href="/user/home" class="back-btn">← 사용자 홈으로</a>
+  </div>
 
   <script>
-    function toggleAll(source) {
-      const checkboxes = document.querySelectorAll('input[name="delete_ids"]');
-      checkboxes.forEach(cb => cb.checked = source.checked);
+    function submitEquipmentRequest(id) {
+      const quantity = document.getElementById(`quantity_${id}`).value;
+      fetch("/user/equipment/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `equipment_id=${id}&quantity=${quantity}`
+      })
+      .then(res => res.json())
+      .then(data => alert(data.success ? "비품 신청 완료!" : "실패: " + data.message));
     }
   </script>
 </body>
 </html>
-
