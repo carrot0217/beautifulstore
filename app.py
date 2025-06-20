@@ -948,11 +948,9 @@ def update_store_name():
     if not session.get('is_admin'):
         return redirect(url_for('login'))
 
-    # 사용자로부터 전달받은 매장명 및 사용자명
     username = request.form.get('username')
     store_name = request.form.get('store_name')
 
-    # DB 연결 및 업데이트 실행
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
@@ -964,9 +962,8 @@ def update_store_name():
     cur.close()
     conn.close()
 
-    # 사용자 관리 페이지로 이동 (경로가 /admin/users라면 admin_users가 맞습니다)
-    return redirect(url_for('admin_users'))
-
+    flash("매장명이 수정되었습니다.")
+    return redirect(url_for('manage_users'))
 # ----------------------- 입고일 -----------------------
 @app.route("/user/schedule")
 def user_schedule():
