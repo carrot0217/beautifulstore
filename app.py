@@ -22,9 +22,10 @@ CATEGORY_LIST = [
     "의류", "일반잡화", "주방용품", "가방/신발", "도서/DVD", "식품/화장품", "가전제품"
 ]
 
+
 SUPABASE_URL = os.getenv('SUPABASE_URL')
 SUPABASE_KEY = os.getenv('SUPABASE_KEY')
-SUPABASE_BUCKET = 'uploads'  # ✅ 실제 존재하는 Public 버킷
+SUPABASE_BUCKET = os.getenv('SUPABASE_BUCKET')  # ✅ 실제 존재하는 Public 버킷
 
 # Supabase 파일 업로드 함수 (REST API 방식)
 def upload_to_supabase(file_data, filename, content_type):
@@ -224,7 +225,7 @@ def manage_items():
                 unique_filename = f"{uuid.uuid4().hex}{ext}"
                 content_type = file.content_type
                 file_data = file.read()
-                image_url = upload_to_supabase(file_data, unique_filename, content_type)
+                image_url = upload_to_supabase(file_data, file.filename, content_type)
 
         cur.execute("""
             INSERT INTO items (name, description, quantity, unit_price, category, image, max_request)
