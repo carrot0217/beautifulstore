@@ -24,20 +24,23 @@ CATEGORY_LIST = [
 
 SUPABASE_URL = os.getenv('SUPABASE_URL')
 SUPABASE_KEY = os.getenv('SUPABASE_KEY')
-SUPABASE_BUCKET = 'product-images'
+SUPABASE_BUCKET = 'uploads'  # ✅ 실제 존재하는 Public 버킷
 
 # Supabase 파일 업로드 함수 (REST API 방식)
 def upload_to_supabase(file_data, filename, content_type):
     url = f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_BUCKET}/{filename}"
     headers = {
+        "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": content_type,
-        "x-upsert": "true"
+        "Content-Type": content_type
     }
-    response = requests.post(url, headers=headers, data=file_data)
-    if response.status_code in [200, 201]:
+    res = requests.post(url, headers=headers, data=file_data)
+    print(f"[📡 Supabase 응답] status={res.status_code}, text={res.text}")
+    
+    if res.status_code in [200, 201]:
         return f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{filename}"
     return None
+
 
 # ✅ 상품 이미지 재등록 라우트 추가
 @app.route('/admin/items/update_image/<int:item_id>', methods=['POST'])
