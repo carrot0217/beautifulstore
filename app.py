@@ -243,9 +243,6 @@ def manage_items():
 
 @app.route('/admin/items/edit/<int:item_id>', methods=['POST'])
 def edit_item(item_id):
-    if not session.get('is_admin'):
-        return redirect(url_for('dashboard'))
-
     conn = get_connection()
     cur = conn.cursor()
 
@@ -255,10 +252,12 @@ def edit_item(item_id):
     unit_price = float(request.form.get('unit_price', 0))
     max_request = request.form.get('max_request')
     max_request = int(max_request) if max_request else None
-    category = request.form.get('category') or request.form.get('custom-category') or ''
+    category = request.form.get('category', '')
 
     image_url = None
-    if 'image' in request.files and request.files['image'].filename:
+
+    # ✅ Supabase에 새 이미지 업로드 처리
+    if 'image' in request.files and request.files['image'].filename != '':
         file = request.files['image']
         ext = os.path.splitext(file.filename)[1]
         unique_filename = f"{uuid.uuid4().hex}{ext}"
@@ -266,19 +265,25 @@ def edit_item(item_id):
         file_data = file.read()
         image_url = upload_to_supabase(file_data, unique_filename, content_type)
 
+        # ✅ 새 이미지가 있으면 이미지 포함 UPDATE
         cur.execute("""
-            UPDATE items SET name=%s, description=%s, quantity=%s, unit_price=%s,
-                category=%s, image=%s, max_request=%s WHERE id=%s
+            UPDATE items
+            SET name=%s, description=%s, quantity=%s, unit_price=%s, category=%s, image=%s, max_request=%s
+            WHERE id=%s
         """, (name, description, stock, unit_price, category, image_url, max_request, item_id))
+
     else:
+        # ✅ 새 이미지 없을 경우 기존 이미지 유지
         cur.execute("""
-            UPDATE items SET name=%s, description=%s, quantity=%s, unit_price=%s,
-                category=%s, max_request=%s WHERE id=%s
+            UPDATE items
+            SET name=%s, description=%s, quantity=%s, unit_price=%s, category=%s, max_request=%s
+            WHERE id=%s
         """, (name, description, stock, unit_price, category, max_request, item_id))
 
     conn.commit()
     cur.close(); conn.close()
     return redirect(url_for('manage_items', message='updated'))
+
 
 
 
