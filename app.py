@@ -39,6 +39,33 @@ def upload_to_supabase(file_data, filename, content_type):
         return f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{filename}"
     return None
 
+# ✅ 상품 이미지 재등록 라우트 추가
+@app.route('/admin/items/update_image/<int:item_id>', methods=['POST'])
+def update_item_image(item_id):
+    if 'user_id' not in session or not session.get('is_admin'):
+        return redirect(url_for('login'))
+
+    file = request.files.get('image')
+    if not file:
+        flash('이미지 파일을 선택하세요.')
+        return redirect(url_for('manage_items'))
+
+    filename = f"{uuid.uuid4()}_{secure_filename(file.filename)}"
+    content_type = file.content_type
+    image_url = upload_to_supabase(file.read(), filename, content_type)
+
+    if image_url:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("UPDATE items SET image = %s WHERE id = %s", (image_url, item_id))
+        conn.commit()
+        cur.close(); conn.close()
+        flash('✅ 이미지가 재등록되었습니다.')
+    else:
+        flash('❌ 이미지 업로드에 실패했습니다.')
+
+    return redirect(url_for('manage_items'))
+
 # ----------------------- [일반 사용자] 비동기 신청 처리 -----------------------
 @app.route('/user/request/ajax', methods=['POST'])
 def user_request_ajax():

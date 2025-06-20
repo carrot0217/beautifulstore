@@ -91,7 +91,10 @@
     <input type="file" name="image" accept="image/*" required>
     <button type="submit">상품 등록</button>
   </form>
-
+  <form action="/admin/items/update_image/{{ item.id }}" method="POST" enctype="multipart/form-data" style="margin-top: 10px;">
+  <input type="file" name="image" accept="image/*" required>
+  <button type="submit" class="btn-yellow-small">이미지 재등록</button>
+ </form>
   <form method="POST" action="/admin/items" enctype="multipart/form-data">
     <div class="form-row">
       <input type="text" name="name" placeholder="상품명" required>
