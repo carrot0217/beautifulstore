@@ -254,28 +254,26 @@ def edit_item(item_id):
     max_request = request.form.get('max_request')
     max_request = int(max_request) if max_request else None
 
-    # 이미지 처리
     image = request.files.get('image')
-    image_filename = None
+    image_url = None
 
     if image and image.filename:
         ext = os.path.splitext(image.filename)[1]
         unique_filename = f"{uuid.uuid4().hex}{ext}"
-        image_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-        image.save(image_path)
-        image_filename = unique_filename
+        content_type = image.content_type
+        file_data = image.read()
+        image_url = upload_to_supabase(file_data, unique_filename, content_type)
 
-    # DB 연결
     conn = get_connection()
     cur = conn.cursor()
 
-    if image_filename:
+    if image_url:
         cur.execute("""
             UPDATE items
             SET name = %s, description = %s, quantity = %s,
                 unit_price = %s, category = %s, image = %s, max_request = %s
             WHERE id = %s
-        """, (name, description, stock, unit_price, category, image_filename, max_request, item_id))
+        """, (name, description, stock, unit_price, category, image_url, max_request, item_id))
     else:
         cur.execute("""
             UPDATE items
@@ -289,6 +287,7 @@ def edit_item(item_id):
     conn.close()
 
     return redirect(url_for('manage_items', message='updated'))
+
 
 
 
