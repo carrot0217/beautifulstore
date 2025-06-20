@@ -195,7 +195,6 @@ def admin_delete_order():
 
 
 # ----------------------- 상품 등록/수정/삭제 -----------------------
-# app.py
 @app.route('/admin/items', methods=['GET', 'POST'])
 def manage_items():
     if not session.get('is_admin'):
@@ -254,7 +253,6 @@ def edit_item(item_id):
     max_request = int(max_request) if max_request else None
     category = request.form.get('category', '')
 
-    # 기본적으로 이미지 URL은 None
     image_url = None
     file = request.files.get('image')
 
@@ -265,7 +263,9 @@ def edit_item(item_id):
         file_data = file.read()
         image_url = upload_to_supabase(file_data, unique_filename, content_type)
 
-        # ✅ 이미지 포함 업데이트 쿼리
+        print(f"[이미지 URL 생성됨] → {image_url}")  # ✅ 로그 추가
+
+        # DB에 이미지 포함 업데이트
         cur.execute("""
             UPDATE items
             SET name=%s, description=%s, quantity=%s, unit_price=%s,
@@ -273,7 +273,9 @@ def edit_item(item_id):
             WHERE id=%s
         """, (name, description, stock, unit_price, category, max_request, image_url, item_id))
     else:
-        # ✅ 이미지 제외 업데이트 쿼리
+        print("[이미지 없음] 기존 이미지 유지")  # ✅ 로그 추가
+
+        # DB에 이미지 제외 업데이트
         cur.execute("""
             UPDATE items
             SET name=%s, description=%s, quantity=%s, unit_price=%s,
@@ -285,6 +287,7 @@ def edit_item(item_id):
     cur.close()
     conn.close()
     return redirect(url_for('manage_items', message='updated'))
+
 
 
 
