@@ -968,49 +968,40 @@ def update_store_name():
 # ----------------------- 입고일 -----------------------
 @app.route("/user/schedule")
 def user_schedule():
-    # 로그인 여부 및 일반 사용자 확인
-    if 'user_id' not in session or session.get('is_admin'):
+    user_id = session.get('user_id')
+    if not user_id or session.get('is_admin'):
         return redirect(url_for('login'))
 
     conn = get_connection()
     cur = conn.cursor()
 
-    try:
-        # 오늘 ~ 7일 후까지의 날짜 범위 계산
-        today = datetime.today().date()
-        seven_days_later = today + timedelta(days=7)
+    today = datetime.today().date()
+    seven_days_later = today + timedelta(days=7)
 
-        # orders 테이블에서 배송일 기준 입고 일정 조회
-        # ✅ item 컬럼이 문자열일 경우를 고려해 i.id::TEXT로 변환
-        cur.execute("""
-            SELECT i.name, o.quantity, o.delivery_date
-            FROM orders o
-            JOIN items i ON o.item = i.id::TEXT
-            WHERE o.status = '완료'
-              AND o.user_id = %s
-              AND o.delivery_date BETWEEN %s AND %s
-            ORDER BY o.delivery_date ASC
-        """, (session['user_id'], today, seven_days_later))
+    # ✅ CAST로 형 변환하여 integer = integer 비교
+    cur.execute("""
+        SELECT i.name, o.quantity, o.delivery_date
+        FROM orders o
+        JOIN items i ON CAST(o.item AS INTEGER) = i.id
+        WHERE o.status = '완료'
+          AND o.user_id = %s
+          AND o.delivery_date BETWEEN %s AND %s
+        ORDER BY o.delivery_date ASC
+    """, (user_id, today, seven_days_later))
 
-        schedule = [
-            {
-                "name": row[0],
-                "quantity": row[1],
-                "delivery_date": row[2].strftime("%Y-%m-%d") if row[2] else ""
-            }
-            for row in cur.fetchall()
-        ]
-    except Exception as e:
-        # 에러 로그를 서버에 출력 (디버깅 용도)
-        print("[입고일정 오류]", e)
-        schedule = []
-    finally:
-        cur.close()
-        conn.close()
+    schedule = [
+        {
+            "name": row[0],
+            "quantity": row[1],
+            "delivery_date": row[2].strftime("%Y-%m-%d") if row[2] else ""
+        }
+        for row in cur.fetchall()
+    ]
+
+    cur.close()
+    conn.close()
 
     return render_template("user_schedule.html", schedule=schedule)
-
-
 # ----------------------- 상품 상세 정보 AJAX -----------------------
 @app.route('/user/item/<int:item_id>')
 def get_item_details(item_id):

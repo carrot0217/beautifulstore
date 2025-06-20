@@ -61,19 +61,21 @@
         <th>배송일</th>
       </tr>
     </thead>
-    <tbody>
-      {% for entry in schedule %}
-        <tr>
-          <td>{{ entry.name }}</td>
-          <td>{{ entry.quantity }}</td>
-          <td class="status">배송중 🚚</td>
-          <td>{{ entry.delivery_date }}</td>
-        </tr>
-      {% endfor %}
+<tbody>
+  {% if schedule %}
+    {% for entry in schedule %}
+      <tr>
+        <td>{{ entry.name }}</td>
+        <td>{{ entry.quantity }}</td>
+        <td class="status">배송중 🚚</td>
+        <td>{{ entry.delivery_date }}</td>
+      </tr>
+    {% endfor %}
   {% else %}
     <tr><td colspan="4">예정된 입고 일정이 없습니다.</td></tr>
   {% endif %}
 </tbody>
+
   </table>
 
   <a href="{{ url_for('user_home') }}" class="btn-back">← 돌아가기</a>
