@@ -1768,7 +1768,19 @@ def user_items():
     else:
         cur.execute("SELECT id, name, price, quantity, description, image_url, category FROM items WHERE category = %s ORDER BY id DESC", (category,))
 
-    items = cur.fetchall()
+    rows = cur.fetchall()   # ✅ 여기를 아래 코드로 대체합니다.
+    items = [
+        {
+            "id": row[0],
+            "name": row[1],
+            "price": int(row[2]) if row[2] is not None else 0,
+            "quantity": row[3],
+            "description": row[4],
+            "image_url": row[5],
+            "category": row[6]
+        }
+        for row in rows
+    ]
 
     cur.execute("SELECT DISTINCT category FROM items ORDER BY category")
     categories = [row[0] for row in cur.fetchall()]
@@ -1776,8 +1788,7 @@ def user_items():
     cur.close()
     conn.close()
 
-    return render_template('user_request_form.html', items=items, categories=categories, current_category=category)
-# ----------------------- 이킙먼트 유저 -----------------------
+    return render_template('user_request_form.html', items=items, categories=categories, current_category=category)# ----------------------- 이킙먼트 유저 -----------------------
 @app.route('/user/equipments')
 def user_equipments():
     if 'user_id' not in session:
