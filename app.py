@@ -122,16 +122,7 @@ def user_request_form():
             ORDER BY id DESC
         """, (current_category,))
     
-    items = [
-        {
-            "id": row[0],
-            "name": row[1],
-            "price": row[2],
-            "image": row[3],
-            "quantity": row[4],
-            "category": row[5],
-            "description": row[6],
-            items = [
+items = [
     {
         "id": row[0],
         "name": row[1],
@@ -144,7 +135,6 @@ def user_request_form():
     }
     for row in cur.fetchall()
 ]
-
 
     cur.close(); conn.close()
 
@@ -849,12 +839,7 @@ def user_home():
 
     # 최근 상품
     cur.execute("SELECT id, name, unit_price, image FROM items WHERE quantity > 0 ORDER BY id DESC LIMIT 10")
-    items = [
-        {
-            "id": row[0],
-            "name": row[1],
-            "price": row[2] if row[2] is not None else 0,
-            items = [
+items = [
     {
         "id": row[0],
         "name": row[1],
