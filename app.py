@@ -1016,6 +1016,7 @@ def get_item_details(item_id):
     if not row:
         return jsonify(success=False)
 
+
     return jsonify({
         "name": row[0],
         "description": row[1],
@@ -1160,7 +1161,6 @@ def admin_logs():
         ORDER BY COUNT(*) DESC
     """)
     action_data = [{'action': row[0], 'count': row[1]} for row in cur.fetchall()]
-
     cur.close(); conn.close()
 
     return render_template(
@@ -1753,6 +1753,7 @@ def admin_equipments():
     conn.close()
 
     return render_template('admin_equipments.html', equipments=equipments)
+# --------------------- 사용자 상품 요청 폼 ---------------------
 @app.route('/user/items')
 def user_items():
     if 'user_id' not in session:
@@ -1768,27 +1769,15 @@ def user_items():
     else:
         cur.execute("SELECT id, name, price, quantity, description, image_url, category FROM items WHERE category = %s ORDER BY id DESC", (category,))
 
-    rows = cur.fetchall()   # ✅ 여기를 아래 코드로 대체합니다.
-    items = [
-        {
-            "id": row[0],
-            "name": row[1],
-            "price": int(row[2]) if row[2] is not None else 0,
-            "quantity": row[3],
-            "description": row[4],
-            "image_url": row[5],
-            "category": row[6]
-        }
-        for row in rows
-    ]
+    items = cur.fetchall()
 
     cur.execute("SELECT DISTINCT category FROM items ORDER BY category")
     categories = [row[0] for row in cur.fetchall()]
     
-    cur.close()
-    conn.close()
+    cur.close(); conn.close()  # ← 바로 이 부분이 139번째 줄로 보입니다.
 
-    return render_template('user_request_form.html', items=items, categories=categories, current_category=category)# ----------------------- 이킙먼트 유저 -----------------------
+    return render_template('user_request_form.html', items=items, categories=categories, current_category=category)
+# ----------------------- 이킙먼트 유저 -----------------------
 @app.route('/user/equipments')
 def user_equipments():
     if 'user_id' not in session:
