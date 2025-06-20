@@ -1,10 +1,8 @@
-# ✅ 새로 추가된 상품 이미지 재드래그 HTML 템플릿
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>포장 상품 등록</title>
+  <title>상품 페이지</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body { background-color: #fffaf3; font-family: 'Segoe UI', sans-serif; text-align: center; padding: 40px; }
@@ -89,7 +87,7 @@
       <input type="text" name="name" placeholder="상품명" required>
       <select name="category" onchange="handleCategoryChange(this)">
         <option value="의류">의류</option>
-        <option value="일반잡화">일반잡화</option>
+        <option value="일반자화">일반자화</option>
         <option value="주방용품">주방용품</option>
         <option value="가방/신발">가방/신발</option>
         <option value="도서/DVD">도서/DVD</option>
@@ -124,7 +122,7 @@
     </tr>
 {% for item in items %}
 <tr>
-  <form method="POST" enctype="multipart/form-data">
+  <form method="POST" enctype="multipart/form-data" action="/admin/items/edit/{{ item[0] }}">
     <td><input type="text" name="name" value="{{ item[1] }}" required></td>
     <td><input type="text" name="category" value="{{ item[5] or '' }}" required></td>
     <td><input type="text" name="description" value="{{ item[2] }}"></td>
@@ -142,27 +140,25 @@
         <img src="{{ item[6] }}" class="thumbnail" onerror="this.style.display='none'">
         <span class="zoom-icon" onclick="openPopup('{{ item[6] }}')">🔍</span>
       </div>
-      {% else %}
-      -
-      {% endif %}
+      {% else %}-{% endif %}
       <div style="margin-top: 6px;">
-        <form action="/admin/items/update_image/{{ item[0] }}" method="POST" enctype="multipart/form-data">
-          <input type="file" name="image" accept="image/*" required>
-          <button type="submit" class="btn-add" style="margin-top: 6px;">이미지 재등록</button>
-        </form>
+        <input type="file" name="image" accept="image/*">
+        <small style="font-size: 0.8em; color: #666;">※ 새 이미지 선택 시 기존 이미지가 변경됩니다.</small>
       </div>
     </td>
     <td>
-      <button type="submit" class="btn-edit" formaction="/admin/items/edit/{{ item[0] }}">
-        <span class="btn-emoji">💾</span><span class="btn-label">수정</span>
-      </button>
-    </td>
-    <td>
-      <button type="submit" class="btn-delete" formaction="/admin/items/delete/{{ item[0] }}" onclick="return confirm('정말 삭제하시겠습니까?');">
-        <span class="btn-emoji">❌</span><span class="btn-label">삭제</span>
+      <button type="submit" class="btn-edit">
+        <span class="btn-emoji">📂</span><span class="btn-label">수정</span>
       </button>
     </td>
   </form>
+  <td>
+    <form method="POST" action="/admin/items/delete/{{ item[0] }}">
+      <button type="submit" class="btn-delete" onclick="return confirm('정말 삭제하시겠습니까?');">
+        <span class="btn-emoji">❌</span><span class="btn-label">삭제</span>
+      </button>
+    </form>
+  </td>
 </tr>
 {% endfor %}
   </table>
