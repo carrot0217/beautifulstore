@@ -195,6 +195,7 @@ def admin_delete_order():
 
 
 # ----------------------- 상품 등록/수정/삭제 -----------------------
+# app.py
 @app.route('/admin/items', methods=['GET', 'POST'])
 def manage_items():
     if not session.get('is_admin'):
@@ -212,16 +213,16 @@ def manage_items():
         max_request = request.form.get('max_request')
         max_request = int(max_request) if max_request else None
         category = request.form.get('category') or request.form.get('custom-category') or ''
-        image_url = None
 
-        # ✅ Supabase 업로드 로직
-        if 'image' in request.files and request.files['image'].filename:
+        image_url = None
+        if 'image' in request.files and request.files['image']:
             file = request.files['image']
-            ext = os.path.splitext(file.filename)[1]
-            unique_filename = f"{uuid.uuid4().hex}{ext}"
-            content_type = file.content_type
-            file_data = file.read()
-            image_url = upload_to_supabase(file_data, unique_filename, content_type)
+            if file and file.filename:
+                ext = os.path.splitext(file.filename)[1]
+                unique_filename = f"{uuid.uuid4().hex}{ext}"
+                content_type = file.content_type
+                file_data = file.read()
+                image_url = upload_to_supabase(file_data, unique_filename, content_type)
 
         cur.execute("""
             INSERT INTO items (name, description, quantity, unit_price, category, image, max_request)
@@ -256,6 +257,7 @@ def edit_item(item_id):
     max_request = int(max_request) if max_request else None
     category = request.form.get('category') or request.form.get('custom-category') or ''
 
+    image_url = None
     if 'image' in request.files and request.files['image'].filename:
         file = request.files['image']
         ext = os.path.splitext(file.filename)[1]
