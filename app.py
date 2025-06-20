@@ -1773,8 +1773,9 @@ def user_items():
 
     cur.execute("SELECT DISTINCT category FROM items ORDER BY category")
     categories = [row[0] for row in cur.fetchall()]
-    
-    cur.close(); conn.close()  # ← 바로 이 부분이 139번째 줄로 보입니다.
+
+    cur.close()
+    conn.close()  # ← 이 두 줄 들여쓰기 맞춰서 각각 따로 쓰는 것이 안전합니다
 
     return render_template('user_request_form.html', items=items, categories=categories, current_category=category)
 # ----------------------- 이킙먼트 유저 -----------------------
