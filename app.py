@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 from db import get_connection
 from datetime import datetime, date, timedelta
 from dotenv import load_dotenv
+from supabase_client import supabase
 
 load_dotenv()
 
@@ -153,11 +154,11 @@ def admin_delete_order():
 def manage_items():
     if not session.get('is_admin'):
         return redirect(url_for('dashboard'))
-    
+
     conn = get_connection()
     cur = conn.cursor()
     message = request.args.get('message')
-
+중 
     if request.method == 'POST':
         name = request.form['name']
         description = request.form.get('description', '')
@@ -172,11 +173,16 @@ def manage_items():
         if 'image' in request.files and request.files['image']:
             file = request.files['image']
             if file and file.filename:
+                import uuid
+                from supabase_client import supabase
                 ext = os.path.splitext(file.filename)[1]
                 unique_filename = f"{uuid.uuid4().hex}{ext}"
-                filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
-                file.save(filepath)
-                image = unique_filename
+                file_data = file.read()
+                content_type = file.content_type
+
+                response = supabase.storage.from_('product-images').upload(unique_filename, file_data, {"content-type": content_type})
+                if response.status_code == 200:
+                    image = f"https://{SUPABASE_URL.split('//')[1]}/storage/v1/object/public/product-images/{unique_filename}"
 
         cur.execute("""
             INSERT INTO items (name, description, quantity, unit_price, category, image, max_request)
@@ -193,6 +199,7 @@ def manage_items():
     items = cur.fetchall()
     cur.close(); conn.close()
     return render_template('admin_items.html', items=items, message=message, categories=CATEGORY_LIST)
+
 
 
 @app.route('/admin/items/edit/<int:item_id>', methods=['POST'])

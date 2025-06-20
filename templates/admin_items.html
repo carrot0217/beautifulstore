@@ -81,6 +81,17 @@
     </a>
   </div>
   <h2>📦 상품 등록</h2>
+  <!-- ✅ Supabase 방식 추가된 form -->
+  <form action="/admin/items/add" method="POST" enctype="multipart/form-data">
+    <input type="text" name="name" required placeholder="상품명">
+    <input type="number" name="price" required placeholder="가격">
+    <input type="number" name="quantity" required placeholder="재고">
+    <input type="text" name="description" placeholder="설명">
+    <input type="text" name="category" placeholder="카테고리">
+    <input type="file" name="image" accept="image/*" required>
+    <button type="submit">상품 등록</button>
+  </form>
+
   <form method="POST" action="/admin/items" enctype="multipart/form-data">
     <div class="form-row">
       <input type="text" name="name" placeholder="상품명" required>
@@ -160,8 +171,6 @@
   </form>
 </tr>
 {% endfor %}
-
-
   </table>
 
   <div id="customModal">
@@ -171,8 +180,6 @@
       <button onclick="closeModal()">확인</button>
     </div>
   </div>
-
 </body>
 </html>
-
 
