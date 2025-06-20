@@ -111,7 +111,6 @@ def user_request_form():
 
     current_category = request.args.get('category', '전체')
 
-    # 전체 보기일 경우
     if current_category == '전체':
         cur.execute("SELECT id, name, unit_price, image, quantity, category, description FROM items ORDER BY id DESC")
     else:
@@ -121,24 +120,27 @@ def user_request_form():
             WHERE category = %s
             ORDER BY id DESC
         """, (current_category,))
-    
-items = [
-    {
-        "id": row[0],
-        "name": row[1],
-        "price": row[2],
-        "image": row[3],
-        "quantity": row[4],
-        "category": row[5],
-        "description": row[6],
-        "image_url": row[3] if row[3] else "/static/img/noimage.png"
-    }
-    for row in cur.fetchall()
-]
 
-    cur.close(); conn.close()
+    # ✅ 들여쓰기 올바르게 수정
+    items = [
+        {
+            "id": row[0],
+            "name": row[1],
+            "price": row[2],
+            "image": row[3],
+            "quantity": row[4],
+            "category": row[5],
+            "description": row[6],
+            "image_url": row[3] if row[3] else "/static/img/noimage.png"
+        }
+        for row in cur.fetchall()
+    ]
+
+    cur.close()
+    conn.close()
 
     return render_template("user_request_form.html", items=items, categories=CATEGORY_LIST, current_category=current_category)
+
 
 
 # ----------------------- 관리자 전용 주문삭제  -----------------------
