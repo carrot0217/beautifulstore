@@ -245,7 +245,7 @@ def edit_item(item_id):
     if not session.get('is_admin'):
         return redirect(url_for('login'))
 
-    # 폼 데이터 받기
+    # 폼 데이터
     name = request.form.get('name')
     category = request.form.get('category') or request.form.get('custom-category') or ''
     description = request.form.get('description', '')
@@ -254,20 +254,22 @@ def edit_item(item_id):
     max_request = request.form.get('max_request')
     max_request = int(max_request) if max_request else None
 
-    image = request.files.get('image')
+    # 이미지 업로드 처리 (Supabase)
+    image_file = request.files.get('image')
     image_url = None
-
-    if image and image.filename:
-        ext = os.path.splitext(image.filename)[1]
+    if image_file and image_file.filename:
+        ext = os.path.splitext(image_file.filename)[1]
         unique_filename = f"{uuid.uuid4().hex}{ext}"
-        content_type = image.content_type
-        file_data = image.read()
+        content_type = image_file.content_type
+        file_data = image_file.read()
         image_url = upload_to_supabase(file_data, unique_filename, content_type)
 
+    # DB 연결
     conn = get_connection()
     cur = conn.cursor()
 
     if image_url:
+        # 이미지도 수정
         cur.execute("""
             UPDATE items
             SET name = %s, description = %s, quantity = %s,
@@ -275,6 +277,7 @@ def edit_item(item_id):
             WHERE id = %s
         """, (name, description, stock, unit_price, category, image_url, max_request, item_id))
     else:
+        # 텍스트 정보만 수정
         cur.execute("""
             UPDATE items
             SET name = %s, description = %s, quantity = %s,
@@ -287,6 +290,7 @@ def edit_item(item_id):
     conn.close()
 
     return redirect(url_for('manage_items', message='updated'))
+
 
 
 
