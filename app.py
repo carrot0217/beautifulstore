@@ -254,34 +254,36 @@ def edit_item(item_id):
     max_request = int(max_request) if max_request else None
     category = request.form.get('category', '')
 
+    # 기본적으로 이미지 URL은 None
     image_url = None
+    file = request.files.get('image')
 
-    # ✅ Supabase에 새 이미지 업로드 처리
-    if 'image' in request.files and request.files['image'].filename != '':
-        file = request.files['image']
+    if file and file.filename != '':
         ext = os.path.splitext(file.filename)[1]
         unique_filename = f"{uuid.uuid4().hex}{ext}"
         content_type = file.content_type
         file_data = file.read()
         image_url = upload_to_supabase(file_data, unique_filename, content_type)
 
-        # ✅ 새 이미지가 있으면 이미지 포함 UPDATE
+        # ✅ 이미지 포함 업데이트 쿼리
         cur.execute("""
             UPDATE items
-            SET name=%s, description=%s, quantity=%s, unit_price=%s, category=%s, image=%s, max_request=%s
+            SET name=%s, description=%s, quantity=%s, unit_price=%s,
+                category=%s, max_request=%s, image=%s
             WHERE id=%s
-        """, (name, description, stock, unit_price, category, image_url, max_request, item_id))
-
+        """, (name, description, stock, unit_price, category, max_request, image_url, item_id))
     else:
-        # ✅ 새 이미지 없을 경우 기존 이미지 유지
+        # ✅ 이미지 제외 업데이트 쿼리
         cur.execute("""
             UPDATE items
-            SET name=%s, description=%s, quantity=%s, unit_price=%s, category=%s, max_request=%s
+            SET name=%s, description=%s, quantity=%s, unit_price=%s,
+                category=%s, max_request=%s
             WHERE id=%s
         """, (name, description, stock, unit_price, category, max_request, item_id))
 
     conn.commit()
-    cur.close(); conn.close()
+    cur.close()
+    conn.close()
     return redirect(url_for('manage_items', message='updated'))
 
 
