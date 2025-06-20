@@ -1582,27 +1582,6 @@ def manage_users():
     conn.close()
     return render_template('admin_users.html', users=users, keyword=keyword)
 
-# ✅ 매장명 수정 처리 라우트
-@app.route('/admin/users/edit_store/<int:user_id>', methods=['POST'])
-def edit_user_store(user_id):
-    if not session.get('is_admin'):
-        return redirect(url_for('login'))
-
-    new_store_name = request.form.get('store_name')
-    if not new_store_name:
-        flash("❗ 매장명을 입력해주세요.")
-        return redirect(url_for('manage_users'))
-
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("UPDATE users SET store_name = %s WHERE id = %s", (new_store_name, user_id))
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    flash("✅ 매장명이 수정되었습니다.")
-    return redirect(url_for('manage_users'))
-
 # 관리자 권한 토글
 @app.route('/admin/users/toggle_admin/<int:user_id>', methods=['POST'])
 def toggle_admin(user_id):
