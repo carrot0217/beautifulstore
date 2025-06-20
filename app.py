@@ -1534,7 +1534,6 @@ def download_archive():
     today = datetime.now().strftime('%Y%m%d')
     return send_file(output, as_attachment=True, download_name=f"archived_orders_{today}.xlsx", mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 # ----------------------- 사용자관리 -----------------------
-# 사용자 목록 보기 및 등록
 @app.route('/admin/users', methods=['GET', 'POST'])
 def manage_users():
     if not session.get('is_admin'):
@@ -1546,13 +1545,13 @@ def manage_users():
     keyword = request.args.get('keyword', '').strip()
     if keyword:
         cur.execute("""
-            SELECT id, username, is_admin, store
+            SELECT id, username, is_admin, store_name
             FROM users
-            WHERE username ILIKE %s OR store ILIKE %s
+            WHERE username ILIKE %s OR store_name ILIKE %s
             ORDER BY id ASC
         """, (f'%{keyword}%', f'%{keyword}%'))
     else:
-        cur.execute("SELECT id, username, is_admin, store FROM users ORDER BY id ASC")
+        cur.execute("SELECT id, username, is_admin, store_name FROM users ORDER BY id ASC")
 
     users = cur.fetchall()
 
@@ -1577,8 +1576,6 @@ def manage_users():
                 """, (username, password, store, store, is_admin))
                 conn.commit()
                 flash("✅ 사용자 등록 완료")
-
-                # 새로고침
                 return redirect(url_for('manage_users'))
 
     cur.close()
@@ -1586,6 +1583,29 @@ def manage_users():
     return render_template('admin_users.html', users=users, keyword=keyword)
 
 
+# ✅ 매장명 수정 처리 라우트
+@app.route('/admin/users/edit_store/<int:user_id>', methods=['POST'])
+def edit_user_store(user_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('login'))
+
+    new_store_name = request.form.get('store_name')
+    if not new_store_name:
+        flash("❗ 매장명을 입력해주세요.")
+        return redirect(url_for('manage_users'))
+
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE users SET store_name = %s WHERE id = %s", (new_store_name, user_id))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    flash("✅ 매장명이 수정되었습니다.")
+    return redirect(url_for('manage_users'))
+
+
+# 관리자 권한 토글
 @app.route('/admin/users/toggle_admin/<int:user_id>', methods=['POST'])
 def toggle_admin(user_id):
     if not session.get('is_admin'):
@@ -1605,6 +1625,7 @@ def toggle_admin(user_id):
     return redirect(url_for('manage_users'))
 
 
+# 사용자 삭제
 @app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
 def delete_user(user_id):
     if not session.get('is_admin'):
@@ -1618,7 +1639,6 @@ def delete_user(user_id):
     conn.close()
     flash("🗑️ 사용자가 삭제되었습니다.")
     return redirect(url_for('manage_users'))
-
 # ----------------------- 재고관리 -----------------------
 @app.route('/admin/items/chart')
 def item_stock_chart():
