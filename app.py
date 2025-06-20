@@ -1775,17 +1775,33 @@ def user_items():
     cur = conn.cursor()
 
     if category == '전체':
-        cur.execute("SELECT id, name, price, quantity, description, image_url, category FROM items ORDER BY id DESC")
+        cur.execute("SELECT id, name, unit_price, quantity, description, image, category FROM items ORDER BY id DESC")
     else:
-        cur.execute("SELECT id, name, price, quantity, description, image_url, category FROM items WHERE category = %s ORDER BY id DESC", (category,))
+        cur.execute("""
+            SELECT id, name, unit_price, quantity, description, image, category
+            FROM items
+            WHERE category = %s
+            ORDER BY id DESC
+        """, (category,))
 
-    items = cur.fetchall()
+    items = [
+        {
+            "id": row[0],
+            "name": row[1],
+            "price": row[2] if row[2] is not None else 0,
+            "quantity": row[3],
+            "description": row[4],
+            "image_url": row[5] if row[5] else "/static/img/noimage.png",
+            "category": row[6]
+        }
+        for row in cur.fetchall()
+    ]
 
     cur.execute("SELECT DISTINCT category FROM items ORDER BY category")
     categories = [row[0] for row in cur.fetchall()]
 
     cur.close()
-    conn.close()  # ← 이 두 줄 들여쓰기 맞춰서 각각 따로 쓰는 것이 안전합니다
+    conn.close()
 
     return render_template('user_request_form.html', items=items, categories=categories, current_category=category)
 # ----------------------- 이킙먼트 유저 -----------------------

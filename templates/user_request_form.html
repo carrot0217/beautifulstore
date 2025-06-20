@@ -103,7 +103,7 @@
     {% for item in items %}
     <div class="card" data-category="{{ item.category }}">
       <div class="img-wrapper">
-        <img src="{{ item.image_url }}" class="thumb" alt="{{ item.name }}" onclick="showModal(this.src, this.alt)">
+        <img src="{{ item.image_url | default('/static/img/noimage.png') }}" class="thumb" alt="{{ item.name }}" onclick="showModal(this.src, this.alt)">
         <span class="zoom-icon" onclick="event.stopPropagation(); showModal(this.previousElementSibling.src, this.previousElementSibling.alt);">
           <svg viewBox="0 0 18 18"><circle cx="8" cy="8" r="6"/><line x1="13" y1="13" x2="17" y2="17"/></svg>
         </span>
@@ -116,7 +116,7 @@
         <div class="name">{{ item.name }}</div>
         <div>보유재고: <span class="stock">{{ item.quantity }}</span>개</div>
         <div>{{ item.description }}</div>
-        <div class="unit-price">생산단가: {{ item.price|int }}원</div>
+        <div class="unit-price">생산단가: {{ item.price | default(0) | int }}원</div>
       </div>
       <div class="actions">
         <input type="number" min="1" max="{{ item.quantity }}" value="1" class="qty" {% if item.quantity == 0 %}disabled{% endif %}>

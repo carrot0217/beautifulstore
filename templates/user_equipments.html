@@ -85,7 +85,7 @@
       <div class="card">
         <img src="/static/uploads/{{ eq.image_filename or 'noimage.png' }}" alt="{{ eq.name }}">
         <div class="card-name">{{ eq.name }}</div>
-        <div class="card-price">{{ eq.unit_price | round | int }}원 | 재고: {{ eq.stock }}</div>
+        <div class="card-price">{{ eq.unit_price | default(0) | int }}원 | 재고: {{ eq.stock }}</div>
         <input type="number" id="quantity_{{ eq.id }}" min="1" max="99" value="1">
         <button class="btn" onclick="submitEquipmentRequest({{ eq.id }})">신청하기</button>
       </div>
