@@ -1,16 +1,15 @@
 import os
+import requests
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify, abort
 from werkzeug.utils import secure_filename
 from db import get_connection
 from datetime import datetime, date, timedelta
 from dotenv import load_dotenv
-from supabase_client import supabase
-
-load_dotenv()
-
 import pandas as pd
 import io
 import uuid
+
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -22,6 +21,23 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 CATEGORY_LIST = [
     "의류", "일반잡화", "주방용품", "가방/신발", "도서/DVD", "식품/화장품", "가전제품"
 ]
+
+SUPABASE_URL = os.getenv('SUPABASE_URL')
+SUPABASE_KEY = os.getenv('SUPABASE_KEY')
+SUPABASE_BUCKET = 'product-images'
+
+# Supabase 파일 업로드 함수 (REST API 방식)
+def upload_to_supabase(file_data, filename, content_type):
+    url = f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_BUCKET}/{filename}"
+    headers = {
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": content_type,
+        "x-upsert": "true"
+    }
+    response = requests.post(url, headers=headers, data=file_data)
+    if response.status_code in [200, 201]:
+        return f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{filename}"
+    return None
 
 # ----------------------- [일반 사용자] 비동기 신청 처리 -----------------------
 @app.route('/user/request/ajax', methods=['POST'])
@@ -168,26 +184,21 @@ def manage_items():
         max_request = int(max_request) if max_request else None
 
         category = request.form.get('category') or request.form.get('custom-category') or ''
-        image = None
+        image_url = None
 
         if 'image' in request.files and request.files['image']:
             file = request.files['image']
             if file and file.filename:
-                import uuid
-                from supabase_client import supabase, SUPABASE_URL  # ✅ URL도 가져옴
                 ext = os.path.splitext(file.filename)[1]
                 unique_filename = f"{uuid.uuid4().hex}{ext}"
-                file_data = file.read()
                 content_type = file.content_type
-
-                response = supabase.storage.from_('product-images').upload(unique_filename, file_data, {"content-type": content_type})
-                if response.status_code == 200:
-                    image = f"https://{SUPABASE_URL.split('//')[1]}/storage/v1/object/public/product-images/{unique_filename}"
+                file_data = file.read()
+                image_url = upload_to_supabase(file_data, unique_filename, content_type)
 
         cur.execute("""
             INSERT INTO items (name, description, quantity, unit_price, category, image, max_request)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (name, description, stock, unit_price, category, image, max_request))
+        """, (name, description, stock, unit_price, category, image_url, max_request))
         conn.commit()
         cur.close(); conn.close()
         return redirect(url_for('manage_items', message='added'))
