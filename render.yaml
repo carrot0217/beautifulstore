@@ -7,5 +7,8 @@ services:
     plan: free
     region: singapore
 
-build:
-  pythonVersion: 3.10.13
+buildCommand: "./build.sh"
+envVars:
+  - key: PYTHON_VERSION
+    value: 3.11.9
+
