@@ -131,10 +131,20 @@ def user_request_form():
             "quantity": row[4],
             "category": row[5],
             "description": row[6],
-            "image_url": f"/static/uploads/{row[3]}" if row[3] else "/static/img/noimage.png"
-        }
-        for row in cur.fetchall()
-    ]
+            items = [
+    {
+        "id": row[0],
+        "name": row[1],
+        "price": row[2],
+        "image": row[3],
+        "quantity": row[4],
+        "category": row[5],
+        "description": row[6],
+        "image_url": row[3] if row[3] else "/static/img/noimage.png"
+    }
+    for row in cur.fetchall()
+]
+
 
     cur.close(); conn.close()
 
@@ -844,10 +854,15 @@ def user_home():
             "id": row[0],
             "name": row[1],
             "price": row[2] if row[2] is not None else 0,
-            "image_url": f"/static/uploads/{row[3]}" if row[3] else "/static/img/noimage.png"
-        }
-        for row in cur.fetchall()
-    ]
+            items = [
+    {
+        "id": row[0],
+        "name": row[1],
+        "price": row[2] if row[2] is not None else 0,
+        "image_url": row[3] if row[3] else "/static/img/noimage.png"
+    }
+    for row in cur.fetchall()
+]
 
     # 입고 일정
     cur.execute("""
