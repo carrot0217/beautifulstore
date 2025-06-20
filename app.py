@@ -242,54 +242,49 @@ def manage_items():
 
 @app.route('/admin/items/edit/<int:item_id>', methods=['POST'])
 def edit_item(item_id):
-    if not session.get('is_admin'):
-        return redirect(url_for('login'))
-
-    # 폼 데이터
-    name = request.form.get('name')
-    category = request.form.get('category') or request.form.get('custom-category') or ''
-    description = request.form.get('description', '')
-    stock = int(request.form.get('stock', 0))
-    unit_price = float(request.form.get('unit_price', 0))
-    max_request = request.form.get('max_request')
-    max_request = int(max_request) if max_request else None
-
-    # 이미지 업로드 처리 (Supabase)
-    image_file = request.files.get('image')
-    image_url = None
-    if image_file and image_file.filename:
-        ext = os.path.splitext(image_file.filename)[1]
-        unique_filename = f"{uuid.uuid4().hex}{ext}"
-        content_type = image_file.content_type
-        file_data = image_file.read()
-        image_url = upload_to_supabase(file_data, unique_filename, content_type)
-
-    # DB 연결
     conn = get_connection()
     cur = conn.cursor()
 
+    name = request.form['name']
+    category = request.form['category']
+    description = request.form.get('description', '')
+    stock = request.form.get('stock', 0)
+    unit_price = request.form.get('unit_price', 0)
+    max_request = request.form.get('max_request', 0)
+
+    image_url = None
+    if 'image' in request.files:
+        image_file = request.files['image']
+        if image_file and image_file.filename != '':
+            filename = f"{uuid.uuid4()}.jpg"
+            content_type = image_file.content_type
+            file_data = image_file.read()
+
+            # ✅ Supabase 업로드
+            response = upload_to_supabase(file_data, filename, content_type)
+            if response.status_code in [200, 201]:
+                image_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{filename}"
+            else:
+                image_url = None
+
+    # ✅ 기존 DB 업데이트 (이미지 포함 여부에 따라 분기)
     if image_url:
-        # 이미지도 수정
         cur.execute("""
-            UPDATE items
-            SET name = %s, description = %s, quantity = %s,
-                unit_price = %s, category = %s, image = %s, max_request = %s
-            WHERE id = %s
-        """, (name, description, stock, unit_price, category, image_url, max_request, item_id))
+            UPDATE items SET name=%s, category=%s, description=%s, stock=%s,
+            unit_price=%s, max_request=%s, image=%s WHERE id=%s
+        """, (name, category, description, stock, unit_price, max_request, image_url, item_id))
     else:
-        # 텍스트 정보만 수정
         cur.execute("""
-            UPDATE items
-            SET name = %s, description = %s, quantity = %s,
-                unit_price = %s, category = %s, max_request = %s
-            WHERE id = %s
-        """, (name, description, stock, unit_price, category, max_request, item_id))
+            UPDATE items SET name=%s, category=%s, description=%s, stock=%s,
+            unit_price=%s, max_request=%s WHERE id=%s
+        """, (name, category, description, stock, unit_price, max_request, item_id))
 
     conn.commit()
     cur.close()
     conn.close()
 
-    return redirect(url_for('manage_items', message='updated'))
+    return redirect('/admin/items?message=updated')
+
 
 
 
