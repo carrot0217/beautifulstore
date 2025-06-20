@@ -211,18 +211,17 @@ def manage_items():
         unit_price = float(request.form.get('unit_price', 0))
         max_request = request.form.get('max_request')
         max_request = int(max_request) if max_request else None
-
         category = request.form.get('category') or request.form.get('custom-category') or ''
         image_url = None
 
-        if 'image' in request.files and request.files['image']:
+        # ✅ Supabase 업로드 로직
+        if 'image' in request.files and request.files['image'].filename:
             file = request.files['image']
-            if file and file.filename:
-                ext = os.path.splitext(file.filename)[1]
-                unique_filename = f"{uuid.uuid4().hex}{ext}"
-                content_type = file.content_type
-                file_data = file.read()
-                image_url = upload_to_supabase(file_data, unique_filename, content_type)
+            ext = os.path.splitext(file.filename)[1]
+            unique_filename = f"{uuid.uuid4().hex}{ext}"
+            content_type = file.content_type
+            file_data = file.read()
+            image_url = upload_to_supabase(file_data, unique_filename, content_type)
 
         cur.execute("""
             INSERT INTO items (name, description, quantity, unit_price, category, image, max_request)
@@ -240,52 +239,44 @@ def manage_items():
     cur.close(); conn.close()
     return render_template('admin_items.html', items=items, message=message, categories=CATEGORY_LIST)
 
+
 @app.route('/admin/items/edit/<int:item_id>', methods=['POST'])
 def edit_item(item_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('dashboard'))
+
     conn = get_connection()
     cur = conn.cursor()
 
-    name = request.form.get('name')
-    description = request.form.get('description')
-    stock = request.form.get('stock')
-    unit_price = request.form.get('unit_price')
-    category = request.form.get('category')
+    name = request.form['name']
+    description = request.form.get('description', '')
+    stock = int(request.form.get('stock', 0))
+    unit_price = float(request.form.get('unit_price', 0))
     max_request = request.form.get('max_request')
+    max_request = int(max_request) if max_request else None
+    category = request.form.get('category') or request.form.get('custom-category') or ''
 
-    # 기본적으로 기존 이미지를 유지
-    cur.execute("SELECT image FROM items WHERE id = %s", (item_id,))
-    current_image = cur.fetchone()[0]
-
-    image_url = current_image
-    file = request.files.get('image')
-
-    if file and file.filename != '':
-        filename = str(uuid.uuid4()) + os.path.splitext(file.filename)[-1]
+    if 'image' in request.files and request.files['image'].filename:
+        file = request.files['image']
+        ext = os.path.splitext(file.filename)[1]
+        unique_filename = f"{uuid.uuid4().hex}{ext}"
         content_type = file.content_type
         file_data = file.read()
+        image_url = upload_to_supabase(file_data, unique_filename, content_type)
 
-        # 업로드 요청
-        response = upload_to_supabase(file_data, filename, content_type)
-        
-        # ❗ response가 None이 아니고 status_code가 200, 201인 경우만 새 이미지 저장
-        if response and response.status_code in [200, 201]:
-            image_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{filename}"
-
-    cur.execute("""
-        UPDATE items
-        SET name = %s, description = %s, stock = %s, unit_price = %s,
-            category = %s, max_request = %s, image = %s
-        WHERE id = %s
-    """, (name, description, stock, unit_price, category, max_request, image_url, item_id))
+        cur.execute("""
+            UPDATE items SET name=%s, description=%s, quantity=%s, unit_price=%s,
+                category=%s, image=%s, max_request=%s WHERE id=%s
+        """, (name, description, stock, unit_price, category, image_url, max_request, item_id))
+    else:
+        cur.execute("""
+            UPDATE items SET name=%s, description=%s, quantity=%s, unit_price=%s,
+                category=%s, max_request=%s WHERE id=%s
+        """, (name, description, stock, unit_price, category, max_request, item_id))
 
     conn.commit()
-    cur.close()
-    conn.close()
-
-    return redirect(url_for('admin_items', message='updated'))
-
-
-
+    cur.close(); conn.close()
+    return redirect(url_for('manage_items', message='updated'))
 
 
 
