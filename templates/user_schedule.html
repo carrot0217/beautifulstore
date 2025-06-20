@@ -70,7 +70,10 @@
           <td>{{ entry.delivery_date }}</td>
         </tr>
       {% endfor %}
-    </tbody>
+  {% else %}
+    <tr><td colspan="4">예정된 입고 일정이 없습니다.</td></tr>
+  {% endif %}
+</tbody>
   </table>
 
   <a href="{{ url_for('user_home') }}" class="btn-back">← 돌아가기</a>
