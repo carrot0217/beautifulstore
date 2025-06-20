@@ -158,7 +158,7 @@ def manage_items():
     conn = get_connection()
     cur = conn.cursor()
     message = request.args.get('message')
-중 
+
     if request.method == 'POST':
         name = request.form['name']
         description = request.form.get('description', '')
@@ -174,7 +174,7 @@ def manage_items():
             file = request.files['image']
             if file and file.filename:
                 import uuid
-                from supabase_client import supabase
+                from supabase_client import supabase, SUPABASE_URL  # ✅ URL도 가져옴
                 ext = os.path.splitext(file.filename)[1]
                 unique_filename = f"{uuid.uuid4().hex}{ext}"
                 file_data = file.read()
@@ -199,8 +199,6 @@ def manage_items():
     items = cur.fetchall()
     cur.close(); conn.close()
     return render_template('admin_items.html', items=items, message=message, categories=CATEGORY_LIST)
-
-
 
 @app.route('/admin/items/edit/<int:item_id>', methods=['POST'])
 def edit_item(item_id):
