@@ -1,8 +1,10 @@
+# ✅ 새로 추가된 상품 이미지 재드래그 HTML 템플릿
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>📦 상품 등록</title>
+  <title>포장 상품 등록</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body { background-color: #fffaf3; font-family: 'Segoe UI', sans-serif; text-align: center; padding: 40px; }
@@ -81,20 +83,7 @@
     </a>
   </div>
   <h2>📦 상품 등록</h2>
-  <!-- ✅ Supabase 방식 추가된 form -->
-  <form action="/admin/items/add" method="POST" enctype="multipart/form-data">
-    <input type="text" name="name" required placeholder="상품명">
-    <input type="number" name="price" required placeholder="가격">
-    <input type="number" name="quantity" required placeholder="재고">
-    <input type="text" name="description" placeholder="설명">
-    <input type="text" name="category" placeholder="카테고리">
-    <input type="file" name="image" accept="image/*" required>
-    <button type="submit">상품 등록</button>
-  </form>
-  <form action="/admin/items/update_image/{{ item.id }}" method="POST" enctype="multipart/form-data" style="margin-top: 10px;">
-  <input type="file" name="image" accept="image/*" required>
-  <button type="submit" class="btn-yellow-small">이미지 재등록</button>
- </form>
+
   <form method="POST" action="/admin/items" enctype="multipart/form-data">
     <div class="form-row">
       <input type="text" name="name" placeholder="상품명" required>
@@ -150,15 +139,17 @@
     <td>
       {% if item[6] %}
       <div style="position: relative; display: inline-block;">
-        <img src="{{ url_for('static', filename='uploads/' + item[6]|string) }}" class="thumbnail" onerror="this.style.display='none'">
-        <span class="zoom-icon" onclick="openPopup('{{ url_for('static', filename='uploads/' + item[6]|string) }}')">🔍</span>
+        <img src="{{ item[6] }}" class="thumbnail" onerror="this.style.display='none'">
+        <span class="zoom-icon" onclick="openPopup('{{ item[6] }}')">🔍</span>
       </div>
       {% else %}
       -
       {% endif %}
       <div style="margin-top: 6px;">
-        <input type="file" name="image" accept="image/*">
-        <small style="font-size: 0.8em; color: #666;">※ 새 이미지 선택 시 기존 이미지가 변경됩니다.</small>
+        <form action="/admin/items/update_image/{{ item[0] }}" method="POST" enctype="multipart/form-data">
+          <input type="file" name="image" accept="image/*" required>
+          <button type="submit" class="btn-add" style="margin-top: 6px;">이미지 재등록</button>
+        </form>
       </div>
     </td>
     <td>
@@ -185,4 +176,3 @@
   </div>
 </body>
 </html>
-
