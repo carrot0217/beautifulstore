@@ -1,10 +1,16 @@
 # supabase_client.py
-from supabase import create_client
+
 import os
 from dotenv import load_dotenv
+from supabase import create_client, Client
 
-load_dotenv()  # 로컬 실행 시 .env 사용 (Render에서는 무시됨)
+# 환경 변수 로드 (로컬 실행용)
+load_dotenv()
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+SUPABASE_URL: str = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY: str = os.environ.get("SUPABASE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise ValueError("SUPABASE_URL 또는 SUPABASE_KEY 환경변수가 누락되었습니다.")
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
