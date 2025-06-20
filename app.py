@@ -813,7 +813,7 @@ def user_home():
         return redirect(url_for('login'))
 
     username = session['user_id']
-    store_name = session.get('store_name', '') or ''  # 기본값 보장
+    store_name = session.get('store_name', '') or ''
 
     today = datetime.today().date()
     seven_days_later = today + timedelta(days=7)
@@ -841,17 +841,17 @@ def user_home():
 
     # 최근 상품
     cur.execute("SELECT id, name, unit_price, image FROM items WHERE quantity > 0 ORDER BY id DESC LIMIT 10")
-items = [
-    {
-        "id": row[0],
-        "name": row[1],
-        "price": row[2] if row[2] is not None else 0,
-        "image_url": row[3] if row[3] else "/static/img/noimage.png"
-    }
-    for row in cur.fetchall()
-]
+    items = [
+        {
+            "id": row[0],
+            "name": row[1],
+            "price": row[2] if row[2] is not None else 0,
+            "image_url": row[3] if row[3] else "/static/img/noimage.png"
+        }
+        for row in cur.fetchall()
+    ]
 
-    # 입고 일정
+    # ✅ 문제 되는 부분 들여쓰기 수정 완료!
     cur.execute("""
         SELECT i.name, o.quantity, o.delivery_date
         FROM orders o
@@ -870,8 +870,7 @@ items = [
         for row in cur.fetchall()
     ]
 
-    # 최근 주문 3개
-    three_days_ago = datetime.now() - timedelta(days=3)
+    # 나머지도 동일하게
     cur.execute("""
         SELECT i.name, o.quantity, o.created_at
         FROM orders o
@@ -879,7 +878,7 @@ items = [
         WHERE o.user_id = %s AND o.created_at >= %s
         ORDER BY o.created_at DESC
         LIMIT 3
-    """, (username, three_days_ago))
+    """, (username, datetime.now() - timedelta(days=3)))
     recent_orders = [
         {
             "name": row[0],
