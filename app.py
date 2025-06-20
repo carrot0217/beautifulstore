@@ -245,45 +245,45 @@ def edit_item(item_id):
     conn = get_connection()
     cur = conn.cursor()
 
-    name = request.form['name']
-    category = request.form['category']
-    description = request.form.get('description', '')
-    stock = request.form.get('stock', 0)
-    unit_price = request.form.get('unit_price', 0)
-    max_request = request.form.get('max_request', 0)
+    name = request.form.get('name')
+    description = request.form.get('description')
+    stock = request.form.get('stock')
+    unit_price = request.form.get('unit_price')
+    category = request.form.get('category')
+    max_request = request.form.get('max_request')
 
-    image_url = None
-    if 'image' in request.files:
-        image_file = request.files['image']
-        if image_file and image_file.filename != '':
-            filename = f"{uuid.uuid4()}.jpg"
-            content_type = image_file.content_type
-            file_data = image_file.read()
+    # 기본적으로 기존 이미지를 유지
+    cur.execute("SELECT image FROM items WHERE id = %s", (item_id,))
+    current_image = cur.fetchone()[0]
 
-            # ✅ Supabase 업로드
-            response = upload_to_supabase(file_data, filename, content_type)
-            if response.status_code in [200, 201]:
-                image_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{filename}"
-            else:
-                image_url = None
+    image_url = current_image
+    file = request.files.get('image')
 
-    # ✅ 기존 DB 업데이트 (이미지 포함 여부에 따라 분기)
-    if image_url:
-        cur.execute("""
-            UPDATE items SET name=%s, category=%s, description=%s, stock=%s,
-            unit_price=%s, max_request=%s, image=%s WHERE id=%s
-        """, (name, category, description, stock, unit_price, max_request, image_url, item_id))
-    else:
-        cur.execute("""
-            UPDATE items SET name=%s, category=%s, description=%s, stock=%s,
-            unit_price=%s, max_request=%s WHERE id=%s
-        """, (name, category, description, stock, unit_price, max_request, item_id))
+    if file and file.filename != '':
+        filename = str(uuid.uuid4()) + os.path.splitext(file.filename)[-1]
+        content_type = file.content_type
+        file_data = file.read()
+
+        # 업로드 요청
+        response = upload_to_supabase(file_data, filename, content_type)
+        
+        # ❗ response가 None이 아니고 status_code가 200, 201인 경우만 새 이미지 저장
+        if response and response.status_code in [200, 201]:
+            image_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{filename}"
+
+    cur.execute("""
+        UPDATE items
+        SET name = %s, description = %s, stock = %s, unit_price = %s,
+            category = %s, max_request = %s, image = %s
+        WHERE id = %s
+    """, (name, description, stock, unit_price, category, max_request, image_url, item_id))
 
     conn.commit()
     cur.close()
     conn.close()
 
-    return redirect('/admin/items?message=updated')
+    return redirect(url_for('admin_items', message='updated'))
+
 
 
 
