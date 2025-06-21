@@ -837,7 +837,6 @@ def download_user_orders():
 
 
 # ----------------------- 사용자 홈 → 대시보드 이동 라우트 -----------------------
-# 🔧 Flask 라우트 - /user/home
 @app.route('/user/home')
 def user_home():
     if 'user_id' not in session:
@@ -850,7 +849,7 @@ def user_home():
     cur = conn.cursor()
 
     # 상품 정보
-    cur.execute("SELECT id, name, unit_price, image_url FROM items ORDER BY id DESC LIMIT 4")
+    cur.execute("SELECT id, name, unit_price, image FROM items ORDER BY id DESC LIMIT 4")
     items = cur.fetchall()
 
     # 입고 일정
@@ -891,11 +890,17 @@ def user_home():
     notices = cur.fetchall()
 
     # 비품 목록
-    cur.execute("SELECT id, name, stock, unit_price, image_url FROM equipments ORDER BY id DESC LIMIT 6")
+    cur.execute("SELECT id, name, stock, unit_price, image FROM equipments ORDER BY id DESC LIMIT 6")
     equipments = cur.fetchall()
 
     # 쪽지
-    cur.execute("SELECT u.store_name, m.content, m.timestamp FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.recipient_id = %s ORDER BY m.timestamp DESC LIMIT 5", (user_id,))
+    cur.execute("""
+        SELECT u.store_name, m.content, m.timestamp
+        FROM messages m
+        JOIN users u ON m.sender_id = u.id
+        WHERE m.recipient_id = %s
+        ORDER BY m.timestamp DESC LIMIT 5
+    """, (user_id,))
     messages = cur.fetchall()
 
     # 쪽지 보낼 사용자 목록
@@ -916,8 +921,6 @@ def user_home():
         recipients=recipients,
         store_name=store_name
     )
-
-
 
 # ----------------------- 관리자페이지 매장 수정라우트 ----------------------
 @app.route('/admin/users/<int:user_id>/edit_store', methods=['POST'])
