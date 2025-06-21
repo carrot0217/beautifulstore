@@ -90,7 +90,7 @@
     <tbody>
       {% for eq in equipments %}
         <tr>
-          <td><input type="checkbox" name="delete_ids" form="deleteForm" value="{{ eq.id }}"></td>
+          <input type="checkbox" name="delete_ids" form="deleteForm" value="{{ eq.id }}">
           <td>
             {% if eq.image_url %}
               <img src="{{ eq.image_url }}">

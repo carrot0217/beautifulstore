@@ -1887,21 +1887,27 @@ def user_equipment_request():
         return jsonify(success=False, message=str(e))
 
 @app.route('/admin/equipment/delete', methods=['POST'])
-def delete_selected_equipments():
-    if 'user_id' not in session or not session.get('is_admin'):
+def delete_equipments():
+    if not session.get('is_admin'):
         return redirect(url_for('login'))
 
-    ids = request.form.getlist('delete_ids')
-    if ids:
-        ids = list(map(int, ids))  # 문자열 → 정수
-        conn = get_connection()
-        cur = conn.cursor()
-        cur.execute("DELETE FROM equipments WHERE id = ANY(%s)", (ids,))
-        conn.commit()
-        cur.close()
-        conn.close()
+    delete_ids = request.form.getlist('delete_ids')  # <-- 중요!
+    if not delete_ids:
+        flash("삭제할 항목이 선택되지 않았습니다.")
+        return redirect(url_for('manage_equipments'))
 
-    return redirect(url_for('admin_equipments'))
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "DELETE FROM equipments WHERE id = ANY(%s)",
+        (delete_ids,)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    flash("선택한 비품이 삭제되었습니다.")
+    return redirect(url_for('manage_equipments'))
+
 
 
 # ----------------------- 서버 실행 -----------------------
