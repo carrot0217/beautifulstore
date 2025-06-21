@@ -229,15 +229,19 @@
   <div class="card-grid">
     {% for eq in equipments %}
       <div class="card">
-        <img src="/static/uploads/{{ eq.image_filename or 'noimage.png' }}" alt="{{ eq.name }}">
-        <div class="card-name">{{ eq.name }}</div>
-        <div class="card-price">{{ eq.unit_price | round | int }}원 | 재고: {{ eq.stock }}</div>
+        <img src="{{ eq.image_url or '/static/uploads/noimage.png' }}" alt="{{ eq.name }}" style="width:100%; max-height:120px; object-fit:cover;">
+        <div class="card-name"><b>{{ eq.name }}</b></div>
+        <div class="card-price">
+          {{ eq.unit_price | round | int }}원 |
+          재고: {{ eq.stock if eq.stock is not none else 0 }}
+        </div>
         <input type="number" id="quantity_{{ eq.id }}" min="1" max="99" value="1" style="width: 60px;">
         <button class="btn" onclick="submitEquipmentRequest({{ eq.id }})">신청하기</button>
       </div>
     {% endfor %}
   </div>
-</div>    <div class="section">
+</div>
+    <div class="section">
       <h2>📨 쪽지함</h2>
       <div class="msg-tab-buttons">
         <button onclick="showTab('received')" class="btn-small">받은 쪽지함</button>

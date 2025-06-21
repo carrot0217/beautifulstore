@@ -837,6 +837,7 @@ def download_user_orders():
 
 
 # ----------------------- 사용자 홈 → 대시보드 이동 라우트 -----------------------
+# 🔧 Flask 라우트 - /user/home
 @app.route("/user/home")
 def user_home():
     if 'user_id' not in session or session.get('is_admin'):
@@ -860,7 +861,7 @@ def user_home():
     """, (username,))
     messages = cur.fetchall()
 
-    # 사용자 목록
+    # 사용자 목록 (쪽지용)
     cur.execute("""
         SELECT username, store_name, is_admin
         FROM users
@@ -900,7 +901,7 @@ def user_home():
         for row in cur.fetchall()
     ]
 
-    # 최근 주문 3일 이내
+    # 최근 주문 3건
     cur.execute("""
         SELECT i.name, o.quantity, o.created_at
         FROM orders o
@@ -922,15 +923,21 @@ def user_home():
     cur.execute("SELECT id, title, image, created_at FROM notices ORDER BY created_at DESC LIMIT 3")
     notices = cur.fetchall()
 
-    # ✅ 비품 리스트 (image_url 필드 포함)
-    cur.execute("SELECT id, name, unit_price, stock, image_url FROM equipments ORDER BY id DESC LIMIT 4")
+    # 비품 요청용 (최근 4개)
+    cur.execute("""
+        SELECT id, name, unit_price, stock, image_url 
+        FROM equipments 
+        WHERE image_url IS NOT NULL AND image_url != ''
+        ORDER BY id DESC 
+        LIMIT 4
+    """)
     equipments = [
         {
             "id": row[0],
             "name": row[1],
             "unit_price": row[2] if row[2] is not None else 0,
-            "stock": row[3],
-            "image_url": row[4] if row[4] else "/static/uploads/noimage.png"
+            "stock": row[3] if row[3] is not None else 0,
+            "image_url": row[4] or '/static/uploads/noimage.png'
         }
         for row in cur.fetchall()
     ]
