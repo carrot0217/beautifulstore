@@ -923,14 +923,14 @@ def user_home():
     notices = cur.fetchall()
 
     # 비품
-    cur.execute("SELECT id, name, unit_price, stock, image_filename FROM equipments ORDER BY id DESC LIMIT 4")
+    cur.execute("SELECT id, name, unit_price, stock, image_url FROM equipments ORDER BY id DESC LIMIT 4")
     equipments = [
         {
             "id": row[0],
             "name": row[1],
             "unit_price": row[2] if row[2] is not None else 0,
             "stock": row[3],
-            "image_filename": row[4]
+            "image_url": row[4]
         }
         for row in cur.fetchall()
     ]
