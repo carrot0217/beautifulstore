@@ -848,8 +848,8 @@ def user_home():
     conn = get_connection()
     cur = conn.cursor()
 
-    # 최신 상품 정보
-    cur.execute("SELECT id, name, unit_price, image_url FROM items ORDER BY id DESC LIMIT 4")
+    # 최신 상품 정보 (image_url → image)
+    cur.execute("SELECT id, name, unit_price, image FROM items ORDER BY id DESC LIMIT 4")
     items = cur.fetchall()
 
     # 입고 일정
@@ -863,7 +863,7 @@ def user_home():
     """, (user_id,))
     schedule = cur.fetchall()
 
-    # 최근 주문 (상품) — order_date → created_at
+    # 최근 주문 (상품) (order_date → created_at)
     cur.execute("""
         SELECT o.created_at, i.name, o.quantity
         FROM orders o
@@ -874,7 +874,7 @@ def user_home():
     """, (user_id,))
     recent_orders = cur.fetchall()
 
-    # 최근 비품 신청 — request_date → created_at
+    # 최근 비품 신청 (request_date → created_at)
     cur.execute("""
         SELECT r.created_at, e.name, r.quantity
         FROM equipment_requests r
@@ -889,8 +889,8 @@ def user_home():
     cur.execute("SELECT * FROM notices ORDER BY created_at DESC LIMIT 5")
     notices = cur.fetchall()
 
-    # 비품 목록 — image → image_url
-    cur.execute("SELECT id, name, stock, unit_price, image_url FROM equipments ORDER BY id DESC LIMIT 6")
+    # 비품 목록 (image_url → image)
+    cur.execute("SELECT id, name, stock, unit_price, image FROM equipments ORDER BY id DESC LIMIT 6")
     equipments = cur.fetchall()
 
     # 받은 쪽지 목록
