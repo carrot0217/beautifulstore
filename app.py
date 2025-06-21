@@ -1853,16 +1853,33 @@ def user_items():
 # ----------------------- 이킙먼트 유저 -----------------------
 @app.route('/user/equipments')
 def user_equipments():
-    if 'user_id' not in session:
+    if 'user_id' not in session or session.get('is_admin'):
         return redirect(url_for('login'))
 
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT id, name, unit_price, stock, image_filename FROM equipments ORDER BY id DESC")
-    equipments = cur.fetchall()
+
+    cur.execute("""
+        SELECT id, name, image_url, unit_price, stock
+        FROM equipments
+        ORDER BY created_at DESC
+    """)
+    rows = cur.fetchall()
+    equipments = []
+    for row in rows:
+        equipments.append({
+            "id": row[0],
+            "name": row[1],
+            "image_url": row[2],
+            "unit_price": row[3],
+            "stock": row[4]
+        })
+
     cur.close()
     conn.close()
-    return render_template('user_equipments.html', equipments=equipments)
+
+    return render_template("user_equipments.html", equipments=equipments)
+
 
 @app.route('/user/equipment/request', methods=['POST'])
 def user_equipment_request():

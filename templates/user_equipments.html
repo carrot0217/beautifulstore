@@ -83,7 +83,7 @@
   <div class="card-grid">
     {% for eq in equipments %}
       <div class="card">
-        <img src="/static/uploads/{{ eq.image_filename or 'noimage.png' }}" alt="{{ eq.name }}">
+        <img src="{{ eq.image_url or url_for('static', filename='noimage.png') }}" alt="{{ eq.name }}">
         <div class="card-name">{{ eq.name }}</div>
         <div class="card-price">{{ eq.unit_price | default(0) | int }}원 | 재고: {{ eq.stock }}</div>
         <input type="number" id="quantity_{{ eq.id }}" min="1" max="99" value="1">
@@ -110,3 +110,4 @@
   </script>
 </body>
 </html>
+
