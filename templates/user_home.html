@@ -188,7 +188,40 @@
     <p>예정된 입고 일정이 없습니다.</p>
   {% endif %}
 </div>
+<!-- 🧾 주문/비품 신청 이력 탭 -->
+<div class="section">
+  <h2>🧾 신청 이력</h2>
+  <div class="msg-tab-buttons">
+    <button onclick="showHistoryTab('product-tab')" class="btn-small">상품 주문</button>
+    <button onclick="showHistoryTab('equipment-tab')" class="btn-small">비품 신청</button>
+  </div>
 
+  <!-- 상품 주문 탭 -->
+  <div id="product-tab">
+    {% if recent_orders %}
+      <ul>
+        {% for order in recent_orders %}
+          <li>{{ order.order_date }} - {{ order.name }} ({{ order.quantity }}개)</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>최근 상품 주문 내역이 없습니다.</p>
+    {% endif %}
+  </div>
+
+  <!-- 비품 신청 탭 -->
+  <div id="equipment-tab" class="hidden">
+    {% if recent_equipment_orders %}
+      <ul>
+        {% for eq in recent_equipment_orders %}
+          <li>{{ eq.request_date }} - {{ eq.name }} ({{ eq.quantity }}개)</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>최근 비품 신청 내역이 없습니다.</p>
+    {% endif %}
+  </div>
+</div>
 <!-- 🧾 최근 주문 -->
 <div class="section">
   <h2>
@@ -285,7 +318,11 @@
     }
     setInterval(updateClock, 1000);
     updateClock();
-
+    function showHistoryTab(tabName) {
+      document.getElementById('product-tab').classList.add('hidden');
+      document.getElementById('equipment-tab').classList.add('hidden');
+      document.getElementById(tabName).classList.remove('hidden');
+}
     function submitRequestDirect(itemId) {
       const quantity = document.getElementById(`quantity-${itemId}`).value;
       fetch("/user/request/ajax", {

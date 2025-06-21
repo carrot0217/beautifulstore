@@ -838,124 +838,83 @@ def download_user_orders():
 
 # ----------------------- 사용자 홈 → 대시보드 이동 라우트 -----------------------
 # 🔧 Flask 라우트 - /user/home
-@app.route("/user/home")
+@app.route('/user/home')
 def user_home():
-    if 'user_id' not in session or session.get('is_admin'):
+    if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    username = session['user_id']
-    store_name = session.get('store_name', '') or ''
-
-    today = datetime.today().date()
-    seven_days_later = today + timedelta(days=7)
+    user_id = session['user_id']
+    store_name = session.get('store_name')
 
     conn = get_connection()
     cur = conn.cursor()
 
-    # 받은 쪽지
-    cur.execute("""
-        SELECT sender, content, TO_CHAR(timestamp, 'YYYY-MM-DD HH24:MI')
-        FROM messages
-        WHERE recipient = %s
-        ORDER BY timestamp DESC
-    """, (username,))
-    messages = cur.fetchall()
-
-    # 사용자 목록 (쪽지용)
-    cur.execute("""
-        SELECT username, store_name, is_admin
-        FROM users
-        WHERE username != %s AND store_name IS NOT NULL AND store_name != ''
-        ORDER BY is_admin DESC, store_name ASC
-    """, (username,))
-    recipients = cur.fetchall()
-
-    # 최근 상품
-    cur.execute("SELECT id, name, unit_price, image FROM items WHERE quantity > 0 ORDER BY id DESC LIMIT 10")
-    items = [
-        {
-            "id": row[0],
-            "name": row[1],
-            "price": row[2] if row[2] is not None else 0,
-            "image_url": row[3] if row[3] else "/static/img/noimage.png"
-        }
-        for row in cur.fetchall()
-    ]
+    # 상품 정보
+    cur.execute("SELECT id, name, price, image_url FROM items ORDER BY id DESC LIMIT 4")
+    items = cur.fetchall()
 
     # 입고 일정
     cur.execute("""
         SELECT i.name, o.quantity, o.delivery_date
         FROM orders o
-        JOIN items i ON CAST(o.item AS INTEGER) = i.id
-        WHERE o.status = '완료'
-          AND o.user_id = %s
-          AND o.delivery_date BETWEEN %s AND %s
+        JOIN items i ON o.item = i.id
+        WHERE o.user_id = %s AND o.delivery_date >= CURRENT_DATE
         ORDER BY o.delivery_date ASC
-    """, (username, today, seven_days_later))
-    schedule = [
-        {
-            "name": row[0],
-            "quantity": row[1],
-            "delivery_date": row[2].strftime("%Y-%m-%d") if row[2] else ""
-        }
-        for row in cur.fetchall()
-    ]
+        LIMIT 5
+    """, (user_id,))
+    schedule = cur.fetchall()
 
-    # 최근 주문 3건
+    # 최근 주문 (상품)
     cur.execute("""
-        SELECT i.name, o.quantity, o.created_at
+        SELECT o.order_date, i.name, o.quantity
         FROM orders o
-        JOIN items i ON CAST(o.item AS INTEGER) = i.id
-        WHERE o.user_id = %s AND o.created_at >= %s
-        ORDER BY o.created_at DESC
-        LIMIT 3
-    """, (username, datetime.now() - timedelta(days=3)))
-    recent_orders = [
-        {
-            "name": row[0],
-            "quantity": row[1],
-            "order_date": row[2].strftime("%Y-%m-%d")
-        }
-        for row in cur.fetchall()
-    ]
+        JOIN items i ON o.item = i.id
+        WHERE o.user_id = %s AND o.order_date >= CURRENT_DATE - INTERVAL '3 days'
+        ORDER BY o.order_date DESC
+        LIMIT 5
+    """, (user_id,))
+    recent_orders = cur.fetchall()
+
+    # 최근 비품 신청
+    cur.execute("""
+        SELECT r.request_date, e.name, r.quantity
+        FROM equipment_requests r
+        JOIN equipments e ON r.equipment_id = e.id
+        WHERE r.user_id = %s AND r.request_date >= CURRENT_DATE - INTERVAL '3 days'
+        ORDER BY r.request_date DESC
+        LIMIT 5
+    """, (user_id,))
+    recent_equipment_orders = cur.fetchall()
 
     # 공지사항
-    cur.execute("SELECT id, title, image, created_at FROM notices ORDER BY created_at DESC LIMIT 3")
+    cur.execute("SELECT * FROM notices ORDER BY created_at DESC LIMIT 5")
     notices = cur.fetchall()
 
-    # 비품 요청용 (최근 4개)
-    cur.execute("""
-        SELECT id, name, unit_price, stock, image_url 
-        FROM equipments 
-        WHERE image_url IS NOT NULL AND image_url != ''
-        ORDER BY id DESC 
-        LIMIT 4
-    """)
-    equipments = [
-        {
-            "id": row[0],
-            "name": row[1],
-            "unit_price": row[2] if row[2] is not None else 0,
-            "stock": row[3] if row[3] is not None else 0,
-            "image_url": row[4] or '/static/uploads/noimage.png'
-        }
-        for row in cur.fetchall()
-    ]
+    # 비품 목록
+    cur.execute("SELECT id, name, stock, unit_price, image_url FROM equipments ORDER BY id DESC LIMIT 6")
+    equipments = cur.fetchall()
+
+    # 쪽지
+    cur.execute("SELECT u.store_name, m.content, m.timestamp FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.recipient_id = %s ORDER BY m.timestamp DESC LIMIT 5", (user_id,))
+    messages = cur.fetchall()
+
+    # 쪽지 보낼 사용자 목록
+    cur.execute("SELECT id, store_name, is_admin FROM users WHERE id != %s", (user_id,))
+    recipients = cur.fetchall()
 
     cur.close()
     conn.close()
 
-    return render_template(
-        'user_home.html',
-        username=username,
-        store_name=store_name,
+    return render_template("user_home.html",
         items=items,
         schedule=schedule,
         recent_orders=recent_orders,
-        recipients=recipients,
-        messages=messages,
+        recent_equipment_orders=recent_equipment_orders,
         notices=notices,
-        equipments=equipments
+        equipments=equipments,
+        messages=messages,
+        recipients=recipients,
+        store_name=store_name
     )
 
 
