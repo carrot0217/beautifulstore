@@ -1771,7 +1771,7 @@ def manage_equipments():
 
     if request.method == 'POST':
         name = request.form.get('name')
-        file = request.files.get('image')  # ✅ name="image"와 일치해야 함
+        file = request.files.get('file')  # ✅ HTML form의 name="file"과 일치
 
         image_url = None
         if file and file.filename != '':
@@ -1786,7 +1786,6 @@ def manage_equipments():
         """, (name, image_url))
         conn.commit()
 
-    # ✅ 여기서 dict 형식으로 변환
     cur.execute("""
         SELECT id, name, image_url, unit_price, stock, created_at
         FROM equipments ORDER BY created_at DESC
@@ -1807,6 +1806,7 @@ def manage_equipments():
     conn.close()
 
     return render_template('admin_equipments.html', equipments=equipments)
+
 
 
 # --------------------- 사용자 상품 요청 폼 ---------------------
