@@ -82,26 +82,26 @@
         <th><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
         <th>사진</th>
         <th>비품명</th>
-        <th>단가</th>
-        <th>수량</th>
+        <!-- <th>단가</th>
+        <th>수량</th> -->
         <th>등록일</th>
       </tr>
     </thead>
     <tbody>
       {% for eq in equipments %}
         <tr>
-          <input type="checkbox" name="delete_ids" form="deleteForm" value="{{ eq.id }}">
+          <td><input type="checkbox" name="delete_ids" form="deleteForm" value="{{ eq[0] }}"></td>
           <td>
-            {% if eq.image_url %}
-              <img src="{{ eq.image_url }}">
+            {% if eq[2] %}
+              <img src="{{ eq[2] }}">
             {% else %}
               <img src="/static/img/noimage.png">
             {% endif %}
           </td>
-          <td>{{ eq.name }}</td>
-          <td>{{ eq.unit_price | int }}원</td>
-          <td>{{ eq.stock }}</td>
-          <td>{{ eq.created_at.strftime('%Y-%m-%d') }}</td>
+          <td>{{ eq[1] }}</td>
+          <!-- <td>{{ eq[3] }}</td> -->
+          <!-- <td>{{ eq[4] }}</td> -->
+          <td>{{ eq[3].strftime('%Y-%m-%d') }}</td>
         </tr>
       {% endfor %}
     </tbody>
