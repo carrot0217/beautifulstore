@@ -881,7 +881,7 @@ def user_home():
         for row in cur.fetchall()
     ]
 
-    # ✅ 문제 되는 부분 들여쓰기 수정 완료!
+    # 입고 일정
     cur.execute("""
         SELECT i.name, o.quantity, o.delivery_date
         FROM orders o
@@ -900,7 +900,7 @@ def user_home():
         for row in cur.fetchall()
     ]
 
-    # 나머지도 동일하게
+    # 최근 주문 3일 이내
     cur.execute("""
         SELECT i.name, o.quantity, o.created_at
         FROM orders o
@@ -922,7 +922,7 @@ def user_home():
     cur.execute("SELECT id, title, image, created_at FROM notices ORDER BY created_at DESC LIMIT 3")
     notices = cur.fetchall()
 
-    # 비품
+    # ✅ 비품 리스트 (image_url 필드 포함)
     cur.execute("SELECT id, name, unit_price, stock, image_url FROM equipments ORDER BY id DESC LIMIT 4")
     equipments = [
         {
@@ -930,7 +930,7 @@ def user_home():
             "name": row[1],
             "unit_price": row[2] if row[2] is not None else 0,
             "stock": row[3],
-            "image_url": row[4]
+            "image_url": row[4] if row[4] else "/static/uploads/noimage.png"
         }
         for row in cur.fetchall()
     ]
@@ -950,6 +950,7 @@ def user_home():
         notices=notices,
         equipments=equipments
     )
+
 
 
 # ----------------------- 관리자페이지 매장 수정라우트 ----------------------
