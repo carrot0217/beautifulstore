@@ -843,86 +843,52 @@ def user_home():
         return redirect(url_for('login'))
 
     user_id = session['user_id']
-    store_name = session.get('store_name')
+    user_name = session.get('user_name', '사용자')
 
     conn = get_connection()
     cur = conn.cursor()
 
-    # 최신 상품 정보
-    cur.execute("SELECT id, name, unit_price, image_url FROM items ORDER BY id DESC LIMIT 4")
+    # 최신 상품 5개 가져오기
+    cur.execute("SELECT id, name, unit_price, image_url FROM items ORDER BY id DESC LIMIT 5")
     items = cur.fetchall()
 
-    # 입고 일정
+    # 최근 입고 일정 3개 가져오기
     cur.execute("""
-        SELECT i.name, o.quantity, o.delivery_date
+        SELECT o.id, i.name, o.quantity, o.wish_date
         FROM orders o
-        JOIN items i ON o.item = i.id
-        WHERE o.user_id = %s AND o.delivery_date >= CURRENT_DATE
-        ORDER BY o.delivery_date ASC
-        LIMIT 5
-    """, (user_id,))
-    schedule = cur.fetchall()
-
-    # 최근 주문 (상품)
-    cur.execute("""
-        SELECT o.wish_date, i.name, o.quantity
-        FROM orders o
-        JOIN items i ON o.item = i.id
-        WHERE o.user_id = %s AND o.wish_date >= CURRENT_DATE - INTERVAL '3 days'
+        JOIN items i ON o.item = i.id::TEXT
+        WHERE o.store_id = %s AND o.status = '완료'
         ORDER BY o.wish_date DESC
-        LIMIT 5
+        LIMIT 3
     """, (user_id,))
-    recent_orders = cur.fetchall()
+    schedules = cur.fetchall()
 
-    # 최근 비품 신청
-    cur.execute("""
-        SELECT r.request_date, e.name, r.quantity
-        FROM equipment_requests r
-        JOIN equipments e ON r.equipment_id = e.id
-        WHERE r.user_id = %s AND r.request_date >= CURRENT_DATE - INTERVAL '3 days'
-        ORDER BY r.request_date DESC
-        LIMIT 5
-    """, (user_id,))
-    recent_equipment_orders = cur.fetchall()
-
-    # 공지사항
-    cur.execute("SELECT * FROM notices ORDER BY created_at DESC LIMIT 5")
-    notices = cur.fetchall()
-
-    # 비품 목록
-    cur.execute("SELECT id, name, stock, unit_price, image_url FROM equipments ORDER BY id DESC LIMIT 6")
-    equipments = cur.fetchall()
-
-    # 받은 쪽지 목록
-    cur.execute("""
-        SELECT u.store_name, m.content, m.timestamp
-        FROM messages m
-        JOIN users u ON m.sender_id = u.id
-        WHERE m.recipient_id = %s
-        ORDER BY m.timestamp DESC
-        LIMIT 5
-    """, (user_id,))
-    messages = cur.fetchall()
-
-    # 쪽지 보낼 사용자 목록
-    cur.execute("SELECT id, store_name, is_admin FROM users WHERE id != %s", (user_id,))
-    recipients = cur.fetchall()
+    # 최근 메시지 3개 가져오기 (sender_id 존재 여부 확인)
+    try:
+        cur.execute("""
+            SELECT m.id, m.content, m.created_at, u.store_name
+            FROM messages m
+            JOIN users u ON m.sender_id = u.id
+            WHERE m.receiver_id = %s
+            ORDER BY m.created_at DESC
+            LIMIT 3
+        """, (user_id,))
+        messages = cur.fetchall()
+    except Exception as e:
+        messages = []
+        print(f"❌ 메시지 조회 오류: {e}")
 
     cur.close()
     conn.close()
 
-    return render_template("user_home.html",
+    return render_template(
+        'user_home.html',
         items=items,
-        schedule=schedule,
-        recent_orders=recent_orders,
-        recent_equipment_orders=recent_equipment_orders,
-        notices=notices,
-        equipments=equipments,
+        schedules=schedules,
         messages=messages,
-        recipients=recipients,
-        store_name=store_name
+        user_name=user_name,
+        today=datetime.now().strftime('%Y-%m-%d')
     )
-
 
 
 # ----------------------- 관리자페이지 매장 수정라우트 ----------------------
