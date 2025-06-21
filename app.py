@@ -33,14 +33,15 @@ def upload_to_supabase(file_data, filename, content_type):
     headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": content_type
+        "Content-Type": content_type,
+        "x-upsert": "true"
     }
-    res = requests.post(url, headers=headers, data=file_data)
-    print(f"[📡 Supabase 응답] status={res.status_code}, text={res.text}")
-    
-    if res.status_code in [200, 201]:
+    response = requests.put(url, data=file_data, headers=headers)
+    if response.status_code == 200:
         return f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{filename}"
-    return None
+    else:
+        print("Upload failed:", response.text)
+        return None
 
 
 # ✅ 상품 이미지 재등록 라우트 추가
@@ -1763,29 +1764,38 @@ def add_equipment():
 
     return redirect(url_for('admin_equipments'))
 
-@app.route('/admin/equipments')
-def admin_equipments():
+@app.route('/admin/equipments', methods=['GET', 'POST'])
+def manage_equipments():
     if not session.get('is_admin'):
         return redirect(url_for('login'))
 
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT id, name, unit_price, stock, image_filename, created_at FROM equipments ORDER BY id DESC")
-    equipments = [
-        {
-            "id": row[0],
-            "name": row[1],
-            "unit_price": row[2],
-            "stock": row[3],
-            "image_filename": row[4],
-            "created_at": row[5]
-        }
-        for row in cur.fetchall()
-    ]
+
+    if request.method == 'POST':
+        name = request.form.get('name')
+        file = request.files.get('file')
+
+        image_url = None
+        if file and file.filename != '':
+            filename = str(uuid.uuid4()) + os.path.splitext(file.filename)[1]
+            file_data = file.read()
+            content_type = file.content_type
+            image_url = upload_to_supabase(file_data, filename, content_type)
+
+        cur.execute("""
+            INSERT INTO equipments (name, image_url, created_at)
+            VALUES (%s, %s, NOW())
+        """, (name, image_url))
+        conn.commit()
+
+    cur.execute("SELECT id, name, image_url, created_at FROM equipments ORDER BY created_at DESC")
+    equipments = cur.fetchall()
     cur.close()
     conn.close()
 
     return render_template('admin_equipments.html', equipments=equipments)
+
 # --------------------- 사용자 상품 요청 폼 ---------------------
 @app.route('/user/items')
 def user_items():

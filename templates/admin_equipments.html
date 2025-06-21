@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>📎 비품 등록</title>
+  <title>📎 비품 요청/접수</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
@@ -64,9 +64,9 @@
   <h1>📎 비품 등록</h1>
 
   <!-- 비품 등록 폼 -->
-  <form method="POST" action="/admin/equipment/add" enctype="multipart/form-data">
+  <form method="POST" action="/admin/equipments" enctype="multipart/form-data">
     <input type="text" name="name" placeholder="비품명" required>
-    <input type="file" name="image" accept="image/*">
+    <input type="file" name="file" accept="image/*">
     <button type="submit">등록</button>
   </form>
 
@@ -91,7 +91,13 @@
       {% for eq in equipments %}
         <tr>
           <td><input type="checkbox" name="delete_ids" form="deleteForm" value="{{ eq.id }}"></td>
-          <td><img src="/static/uploads/{{ eq.image_filename or 'noimage.png' }}"></td>
+          <td>
+            {% if eq.image_url %}
+              <img src="{{ eq.image_url }}">
+            {% else %}
+              <img src="/static/img/noimage.png">
+            {% endif %}
+          </td>
           <td>{{ eq.name }}</td>
           <td>{{ eq.unit_price | int }}원</td>
           <td>{{ eq.stock }}</td>
