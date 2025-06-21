@@ -57,6 +57,7 @@
     img {
       width: 40px;
       height: auto;
+      object-fit: cover;
     }
   </style>
 </head>
@@ -82,34 +83,32 @@
         <th><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
         <th>사진</th>
         <th>비품명</th>
-        <!-- <th>단가</th>
-        <th>수량</th> -->
+        <th>수량</th>
         <th>등록일</th>
       </tr>
     </thead>
     <tbody>
       {% for eq in equipments %}
         <tr>
-<tr>
-  <td><input type="checkbox" name="delete_ids" form="deleteForm" value="{{ eq.id }}"></td>
-  <td>
-    {% if eq.image_url %}
-      <img src="{{ eq.image_url }}">
-    {% else %}
-      <img src="/static/img/noimage.png">
-    {% endif %}
-  </td>
-  <td>{{ eq.name }}</td>
-  <td>{{ eq.unit_price | int }}원</td>
-  <td>{{ eq.stock }}</td>
-  <td>
-    {% if eq.created_at %}
-      {{ eq.created_at.strftime('%Y-%m-%d') }}
-    {% else %}
-      -
-    {% endif %}
-  </td>
-</tr>
+          <td><input type="checkbox" name="delete_ids" form="deleteForm" value="{{ eq.id }}"></td>
+          <td>
+            {% if eq.image_url %}
+              <img src="{{ eq.image_url }}" alt="비품 이미지">
+            {% else %}
+              <img src="/static/img/noimage.png" alt="기본 이미지">
+            {% endif %}
+          </td>
+          <td>{{ eq.name }}</td>
+          <!-- <td>{{ eq.unit_price }}</td> -->
+          <!-- <td>{{ eq.stock }}</td> -->
+          <td>
+            {% if eq.created_at %}
+              {{ eq.created_at.strftime('%Y-%m-%d') }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+        </tr>
       {% endfor %}
     </tbody>
   </table>
@@ -122,4 +121,3 @@
   </script>
 </body>
 </html>
-
