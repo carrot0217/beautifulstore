@@ -295,9 +295,6 @@ def edit_item(item_id):
 
 
 
-
-
-
 @app.route('/admin/items/delete/<int:item_id>', methods=['POST'])
 def delete_item(item_id):
     if not session.get('is_admin'):
@@ -1774,7 +1771,7 @@ def manage_equipments():
 
     if request.method == 'POST':
         name = request.form.get('name')
-        file = request.files.get('file')
+        file = request.files.get('image')  # ✅ name="image"와 일치해야 함
 
         image_url = None
         if file and file.filename != '':
@@ -1789,12 +1786,28 @@ def manage_equipments():
         """, (name, image_url))
         conn.commit()
 
-    cur.execute("SELECT id, name, image_url, created_at FROM equipments ORDER BY created_at DESC")
-    equipments = cur.fetchall()
+    # ✅ 여기서 dict 형식으로 변환
+    cur.execute("""
+        SELECT id, name, image_url, unit_price, stock, created_at
+        FROM equipments ORDER BY created_at DESC
+    """)
+    rows = cur.fetchall()
+    equipments = []
+    for row in rows:
+        equipments.append({
+            "id": row[0],
+            "name": row[1],
+            "image_url": row[2],
+            "unit_price": row[3],
+            "stock": row[4],
+            "created_at": row[5]
+        })
+
     cur.close()
     conn.close()
 
     return render_template('admin_equipments.html', equipments=equipments)
+
 
 # --------------------- 사용자 상품 요청 폼 ---------------------
 @app.route('/user/items')
@@ -1889,7 +1902,6 @@ def delete_selected_equipments():
         conn.close()
 
     return redirect(url_for('admin_equipments'))
-# ----------------------- 서버 실행 -----------------------
 
 
 # ----------------------- 서버 실행 -----------------------
