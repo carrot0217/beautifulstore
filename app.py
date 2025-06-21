@@ -848,11 +848,11 @@ def user_home():
     conn = get_connection()
     cur = conn.cursor()
 
-    # 최신 상품 정보
-    cur.execute("SELECT id, name, unit_price, image FROM items ORDER BY id DESC LIMIT 4")
+    # ✅ 최신 상품 정보 (image_url 컬럼 기준)
+    cur.execute("SELECT id, name, unit_price, image_url FROM items ORDER BY id DESC LIMIT 4")
     items = cur.fetchall()
 
-    # 입고 일정
+    # ✅ 입고 일정
     cur.execute("""
         SELECT i.name, o.quantity, o.delivery_date
         FROM orders o
@@ -863,37 +863,37 @@ def user_home():
     """, (user_id,))
     schedule = cur.fetchall()
 
-    # 최근 주문 (상품) — ✅ 다시 order_date 사용
+    # ✅ 최근 주문 (상품)
     cur.execute("""
-        SELECT o.order_date, i.name, o.quantity
+        SELECT o.created_at, i.name, o.quantity
         FROM orders o
         JOIN items i ON o.item = i.id
-        WHERE o.user_id = %s AND o.order_date >= CURRENT_DATE - INTERVAL '3 days'
-        ORDER BY o.order_date DESC
+        WHERE o.user_id = %s AND o.created_at >= CURRENT_DATE - INTERVAL '3 days'
+        ORDER BY o.created_at DESC
         LIMIT 5
     """, (user_id,))
     recent_orders = cur.fetchall()
 
-    # 최근 비품 신청 — ✅ 다시 request_date 사용
+    # ✅ 최근 비품 신청
     cur.execute("""
-        SELECT r.request_date, e.name, r.quantity
+        SELECT r.created_at, e.name, r.quantity
         FROM equipment_requests r
         JOIN equipments e ON r.equipment_id = e.id
-        WHERE r.user_id = %s AND r.request_date >= CURRENT_DATE - INTERVAL '3 days'
-        ORDER BY r.request_date DESC
+        WHERE r.user_id = %s AND r.created_at >= CURRENT_DATE - INTERVAL '3 days'
+        ORDER BY r.created_at DESC
         LIMIT 5
     """, (user_id,))
     recent_equipment_orders = cur.fetchall()
 
-    # 공지사항
+    # ✅ 공지사항
     cur.execute("SELECT * FROM notices ORDER BY created_at DESC LIMIT 5")
     notices = cur.fetchall()
 
-    # 비품 목록
-    cur.execute("SELECT id, name, stock, unit_price, image FROM equipments ORDER BY id DESC LIMIT 6")
+    # ✅ 비품 목록 (image_url 사용)
+    cur.execute("SELECT id, name, stock, unit_price, image_url FROM equipments ORDER BY id DESC LIMIT 6")
     equipments = cur.fetchall()
 
-    # 받은 쪽지 목록
+    # ✅ 받은 쪽지 목록
     cur.execute("""
         SELECT u.store_name, m.content, m.timestamp
         FROM messages m
@@ -904,7 +904,7 @@ def user_home():
     """, (user_id,))
     messages = cur.fetchall()
 
-    # 쪽지 보낼 사용자 목록
+    # ✅ 쪽지 보낼 사용자 목록
     cur.execute("SELECT id, store_name, is_admin FROM users WHERE id != %s", (user_id,))
     recipients = cur.fetchall()
 
