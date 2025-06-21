@@ -848,7 +848,7 @@ def user_home():
     conn = get_connection()
     cur = conn.cursor()
 
-    # 최신 상품 정보 (image_url → image)
+    # 최신 상품 정보
     cur.execute("SELECT id, name, unit_price, image FROM items ORDER BY id DESC LIMIT 4")
     items = cur.fetchall()
 
@@ -863,24 +863,24 @@ def user_home():
     """, (user_id,))
     schedule = cur.fetchall()
 
-    # 최근 주문 (상품) (order_date → created_at)
+    # 최근 주문 (상품) — ✅ 다시 order_date 사용
     cur.execute("""
-        SELECT o.created_at, i.name, o.quantity
+        SELECT o.order_date, i.name, o.quantity
         FROM orders o
         JOIN items i ON o.item = i.id
-        WHERE o.user_id = %s AND o.created_at >= CURRENT_DATE - INTERVAL '3 days'
-        ORDER BY o.created_at DESC
+        WHERE o.user_id = %s AND o.order_date >= CURRENT_DATE - INTERVAL '3 days'
+        ORDER BY o.order_date DESC
         LIMIT 5
     """, (user_id,))
     recent_orders = cur.fetchall()
 
-    # 최근 비품 신청 (request_date → created_at)
+    # 최근 비품 신청 — ✅ 다시 request_date 사용
     cur.execute("""
-        SELECT r.created_at, e.name, r.quantity
+        SELECT r.request_date, e.name, r.quantity
         FROM equipment_requests r
         JOIN equipments e ON r.equipment_id = e.id
-        WHERE r.user_id = %s AND r.created_at >= CURRENT_DATE - INTERVAL '3 days'
-        ORDER BY r.created_at DESC
+        WHERE r.user_id = %s AND r.request_date >= CURRENT_DATE - INTERVAL '3 days'
+        ORDER BY r.request_date DESC
         LIMIT 5
     """, (user_id,))
     recent_equipment_orders = cur.fetchall()
@@ -889,7 +889,7 @@ def user_home():
     cur.execute("SELECT * FROM notices ORDER BY created_at DESC LIMIT 5")
     notices = cur.fetchall()
 
-    # 비품 목록 (image_url → image)
+    # 비품 목록
     cur.execute("SELECT id, name, stock, unit_price, image FROM equipments ORDER BY id DESC LIMIT 6")
     equipments = cur.fetchall()
 
