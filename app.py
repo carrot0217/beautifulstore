@@ -850,7 +850,7 @@ def user_home():
     cur = conn.cursor()
 
     # 상품 정보
-    cur.execute("SELECT id, name, price, image_url FROM items ORDER BY id DESC LIMIT 4")
+    cur.execute("SELECT id, name, unit_price, image_url FROM items ORDER BY id DESC LIMIT 4")
     items = cur.fetchall()
 
     # 입고 일정

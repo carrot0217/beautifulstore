@@ -164,7 +164,7 @@
       <div class="card">
         <img src="{{ item.image_url }}" alt="{{ item.name }}">
         <div class="card-name">{{ item.name }}</div>
-        <div class="card-price">{{ item.price | round | int }}원</div>
+        <div class="card-price">{{ item.unit_price | round | int }}원</div>
         <input type="number" id="quantity-{{ item.id }}" min="1" max="99" value="1" style="width: 60px;">
         <button class="btn" onclick="submitRequestDirect({{ item.id }})">신청하기</button>
       </div>
