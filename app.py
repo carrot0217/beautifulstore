@@ -1893,14 +1893,16 @@ def delete_equipments():
 
     ids = request.form.getlist('delete_ids')
     if ids:
-        int_ids = list(map(int, ids))  # 문자열을 정수형으로 변환
         conn = get_connection()
         cur = conn.cursor()
-        cur.execute("DELETE FROM equipments WHERE id = ANY(%s)", (int_ids,))
+        # ✅ 정수형으로 명시적 캐스팅
+        cur.execute("DELETE FROM equipments WHERE id = ANY(%s::int[])", (ids,))
         conn.commit()
         cur.close()
         conn.close()
+
     return redirect(url_for('manage_equipments'))
+
 
 # ----------------------- 서버 실행 -----------------------
 if __name__ == '__main__':
