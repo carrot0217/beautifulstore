@@ -897,7 +897,7 @@ def user_home():
     cur.execute("""
         SELECT u.store_name, m.content, m.timestamp
         FROM messages m
-        JOIN users u ON m.sender_id = u.id
+        JOIN users u ON CAST(m.sender_id AS INTEGER) = u.id
         WHERE m.recipient_id = %s
         ORDER BY m.timestamp DESC
         LIMIT 5
