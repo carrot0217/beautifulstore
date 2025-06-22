@@ -839,60 +839,62 @@ def download_user_orders():
 # ----------------------- 사용자 홈 → 대시보드 이동 라우트 -----------------------
 @app.route('/user/home')
 def user_home():
-    if 'user_id' not in session or session.get('is_admin'):
+    if 'user_id' not in session:
         return redirect(url_for('login'))
 
     user_id = session['user_id']
+    is_admin = session.get('is_admin', False)
+
     conn = get_connection()
     cur = conn.cursor()
 
-    # 사용자 정보 가져오기
-    cur.execute("SELECT store_name FROM users WHERE username = %s", (user_id,))
-    store_name = cur.fetchone()[0]
+    # 🧩 유저 store_name 조회
+    cur.execute("SELECT store_name FROM users WHERE id = %s", (user_id,))
+    store_name_row = cur.fetchone()
     store_name = store_name_row[0] if store_name_row else ''
 
-    # 입고 일정
-    cur.execute("""
-        SELECT o.order_date, i.name, o.quantity, o.wish_date
-        FROM orders o
-        JOIN items i ON o.item = i.id
-        WHERE o.store_name = %s AND o.status = '완료'
-        ORDER BY o.wish_date DESC
-        LIMIT 3
-    """, (store_name,))
-    upcoming_orders = cur.fetchall()
-
-    # 최근 주문 이력 (최근 3일)
+    # 🧩 최근 3일 이내 주문 조회
+    three_days_ago = date.today() - timedelta(days=3)
     cur.execute("""
         SELECT o.order_date, i.name, o.quantity, o.status, o.reason
         FROM orders o
         JOIN items i ON o.item = i.id
-        WHERE o.store_name = %s AND o.order_date >= CURRENT_DATE - INTERVAL '3 days'
+        WHERE o.user_id = %s AND o.order_date >= %s
         ORDER BY o.order_date DESC
-        LIMIT 5
-    """, (store_name,))
+    """, (user_id, three_days_ago))
     recent_orders = cur.fetchall()
 
-    # 쪽지함 (받은 쪽지)
+    # 🧩 입고 예정 내역 조회
     cur.execute("""
-        SELECT m.id, u.store_name, m.message, m.timestamp
-        FROM messages m
-        JOIN users u ON m.sender = u.id
-        WHERE m.recipient = %s
-        ORDER BY m.timestamp DESC
-        LIMIT 5
+        SELECT i.name, o.quantity, o.wish_date
+        FROM orders o
+        JOIN items i ON o.item = i.id
+        WHERE o.user_id = %s AND o.status = '완료'
+        ORDER BY o.wish_date ASC
+        LIMIT 3
     """, (user_id,))
-    messages = cur.fetchall()
+    schedule_items = cur.fetchall()
+
+    # 🧩 전체 상품 목록
+    cur.execute("""
+        SELECT id, name, price, image_url, description
+        FROM items
+        ORDER BY id DESC
+        LIMIT 10
+    """)
+    items = cur.fetchall()
 
     cur.close()
     conn.close()
 
     return render_template("user_home.html",
-                           user_name=session.get('user_name', ''),
+                           user_id=user_id,
+                           is_admin=is_admin,
                            store_name=store_name,
-                           upcoming_orders=upcoming_orders,
+                           items=items,
                            recent_orders=recent_orders,
-                           messages=messages)
+                           schedule_items=schedule_items)
+
 
 # ----------------------- 관리자페이지 매장 수정라우트 ----------------------
 @app.route('/admin/users/<int:user_id>/edit_store', methods=['POST'])
