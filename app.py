@@ -839,94 +839,60 @@ def download_user_orders():
 # ----------------------- 사용자 홈 → 대시보드 이동 라우트 -----------------------
 @app.route('/user/home')
 def user_home():
-    if 'user_id' not in session:
+    if 'user_id' not in session or session.get('is_admin'):
         return redirect(url_for('login'))
 
     user_id = session['user_id']
-    store_name = session.get('store_name')
-
     conn = get_connection()
     cur = conn.cursor()
 
-    # 최신 상품 정보
-    cur.execute("SELECT id, name, unit_price, image_url FROM items ORDER BY id DESC LIMIT 4")
-    items = cur.fetchall()
+    # 사용자 정보 가져오기
+    cur.execute("SELECT store_name FROM users WHERE id = %s", (user_id,))
+    store_name_row = cur.fetchone()
+    store_name = store_name_row[0] if store_name_row else ''
 
     # 입고 일정
     cur.execute("""
-        SELECT i.name, o.quantity, o.delivery_date
+        SELECT o.order_date, i.name, o.quantity, o.wish_date
         FROM orders o
         JOIN items i ON o.item = i.id
-        WHERE o.user_id = %s AND o.delivery_date >= CURRENT_DATE
-        ORDER BY o.delivery_date ASC
-        LIMIT 5
-    """, (user_id,))
-    schedule = cur.fetchall()
+        WHERE o.store_name = %s AND o.status = '완료'
+        ORDER BY o.wish_date DESC
+        LIMIT 3
+    """, (store_name,))
+    upcoming_orders = cur.fetchall()
 
-    # 최근 주문 (상품)
+    # 최근 주문 이력 (최근 3일)
     cur.execute("""
-        SELECT o.created_at, i.name, o.quantity
+        SELECT o.order_date, i.name, o.quantity, o.status, o.reason
         FROM orders o
         JOIN items i ON o.item = i.id
-        WHERE o.user_id = %s AND o.created_at >= CURRENT_DATE - INTERVAL '3 days'
-        ORDER BY o.created_at DESC
+        WHERE o.store_name = %s AND o.order_date >= CURRENT_DATE - INTERVAL '3 days'
+        ORDER BY o.order_date DESC
         LIMIT 5
-    """, (user_id,))
+    """, (store_name,))
     recent_orders = cur.fetchall()
 
-    # 최근 비품 신청
+    # 쪽지함 (받은 쪽지)
     cur.execute("""
-        SELECT r.created_at, e.name, r.quantity
-        FROM equipment_requests r
-        JOIN equipments e ON r.equipment_id = e.id
-        WHERE r.user_id = %s AND r.created_at >= CURRENT_DATE - INTERVAL '3 days'
-        ORDER BY r.created_at DESC
-        LIMIT 5
-    """, (user_id,))
-    recent_equipment_orders = cur.fetchall()
-
-    # 공지사항
-    cur.execute("SELECT * FROM notices ORDER BY created_at DESC LIMIT 5")
-    notices = cur.fetchall()
-
-    # 비품 목록
-    cur.execute("SELECT id, name, stock, unit_price, image_url FROM equipments ORDER BY id DESC LIMIT 6")
-    equipments = cur.fetchall()
-
-    # 받은 쪽지 목록
-    cur.execute("""
-        SELECT u.store_name, m.content, m.timestamp
+        SELECT m.id, u.store_name, m.message, m.timestamp
         FROM messages m
-        JOIN users u ON CAST(m.sender_id AS INTEGER) = u.id
+        JOIN users u ON m.sender = u.id
         WHERE m.recipient = %s
         ORDER BY m.timestamp DESC
         LIMIT 5
     """, (user_id,))
     messages = cur.fetchall()
 
-    # 쪽지 보낼 사용자 목록
-    cur.execute("""
-        SELECT id, store_name, is_admin
-        FROM users
-        WHERE id != %s
-    """, (int(user_id),))  # 🔥 중요: 타입 일치
-    recipients = cur.fetchall()
-
     cur.close()
     conn.close()
 
     return render_template("user_home.html",
-        items=items,
-        schedule=schedule,
-        recent_orders=recent_orders,
-        recent_equipment_orders=recent_equipment_orders,
-        notices=notices,
-        equipments=equipments,
-        messages=messages,
-        recipients=recipients,
-        store_name=store_name
-    )
-
+                           user_name=session.get('user_name', ''),
+                           store_name=store_name,
+                           upcoming_orders=upcoming_orders,
+                           recent_orders=recent_orders,
+                           messages=messages)
 
 # ----------------------- 관리자페이지 매장 수정라우트 ----------------------
 @app.route('/admin/users/<int:user_id>/edit_store', methods=['POST'])
