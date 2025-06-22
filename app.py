@@ -895,14 +895,13 @@ def user_home():
 
     # 받은 쪽지 목록
     cur.execute("""
-        SELECT u.store_name, m.content, m.timestamp
-        FROM messages m
-        JOIN users u ON CAST(m.sender_id AS INTEGER) = u.id
-        WHERE m.recipient_id = %s
-        ORDER BY m.timestamp DESC
-        LIMIT 5
-    """, (user_id,))
-    messages = cur.fetchall()
+    SELECT u.store_name, m.content, m.timestamp
+    FROM messages m
+    JOIN users u ON CAST(m.sender_id AS INTEGER) = u.id
+    WHERE m.recipient = %s
+    ORDER BY m.timestamp DESC
+    LIMIT 5
+""", (user_id,))
 
     # 쪽지 보낼 사용자 목록
     cur.execute("SELECT id, store_name, is_admin FROM users WHERE id != %s", (user_id,))
