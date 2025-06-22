@@ -853,14 +853,14 @@ def user_home():
     store_name_row = cur.fetchone()
     store_name = store_name_row[0] if store_name_row else ''
 
-    # 🧩 최근 3일 이내 주문 조회
+    # 🧩 최근 3일 이내 주문 조회 (✅ 수정: order_date → created_at)
     three_days_ago = date.today() - timedelta(days=3)
     cur.execute("""
-        SELECT o.order_date, i.name, o.quantity, o.status, o.reason
+        SELECT o.created_at, i.name, o.quantity, o.status, o.reason
         FROM orders o
         JOIN items i ON o.item = i.id
-        WHERE o.user_id = %s AND o.order_date >= %s
-        ORDER BY o.order_date DESC
+        WHERE o.user_id = %s AND o.created_at >= %s
+        ORDER BY o.created_at DESC
     """, (user_id, three_days_ago))
     recent_orders = cur.fetchall()
 
@@ -894,7 +894,6 @@ def user_home():
                            items=items,
                            recent_orders=recent_orders,
                            schedule_items=schedule_items)
-
 
 # ----------------------- 관리자페이지 매장 수정라우트 ----------------------
 @app.route('/admin/users/<int:user_id>/edit_store', methods=['POST'])
