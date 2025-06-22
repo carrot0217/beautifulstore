@@ -847,8 +847,8 @@ def user_home():
     cur = conn.cursor()
 
     # 사용자 정보 가져오기
-    cur.execute("SELECT store_name FROM users WHERE id = %s", (user_id,))
-    store_name_row = cur.fetchone()
+    cur.execute("SELECT store_name FROM users WHERE username = %s", (user_id,))
+    store_name = cur.fetchone()[0]
     store_name = store_name_row[0] if store_name_row else ''
 
     # 입고 일정
