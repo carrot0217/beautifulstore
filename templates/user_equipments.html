@@ -2,112 +2,154 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>비품 목록</title>
+  <title>비품 신청</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       background-color: #fffaf3;
       margin: 0;
-      padding: 30px;
+      padding: 40px;
+      text-align: center;
     }
     h1 {
-      text-align: center;
       color: #5a4031;
       margin-bottom: 30px;
     }
-    .card-grid {
+    .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: 20px;
+      padding: 0;
     }
     .card {
-      background-color: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      padding: 14px;
-      text-align: center;
+      background-color: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
     }
     .card img {
       width: 100%;
-      height: 120px;
+      height: 160px;
       object-fit: cover;
-      border-radius: 8px;
+      border-radius: 10px;
     }
     .card-name {
-      margin: 10px 0 4px;
       font-weight: bold;
-      font-size: 1em;
+      font-size: 1.1em;
+      margin: 12px 0 4px;
     }
     .card-price {
-      font-size: 0.9em;
-      color: #777;
+      color: #6d4c41;
+      font-size: 0.95em;
       margin-bottom: 10px;
     }
-    .card input[type="number"] {
-      width: 60px;
-      padding: 4px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      margin-bottom: 8px;
-    }
     .btn {
-      padding: 6px 12px;
-      background-color: #ffd54f;
+      background-color: #ffcc80;
       border: none;
+      padding: 8px 16px;
       border-radius: 8px;
-      cursor: pointer;
       font-weight: bold;
+      cursor: pointer;
     }
     .btn:hover {
-      background-color: #ffcc4d;
+      background-color: #ffb74d;
     }
-    .back-btn {
-      margin-top: 30px;
-      display: inline-block;
-      padding: 8px 14px;
-      background-color: #ffe082;
-      border-radius: 8px;
-      font-weight: bold;
-      text-decoration: none;
-      color: #5a4031;
+    .zoom-icon {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 1.2em;
+      color: #444;
+      cursor: pointer;
     }
-    .back-btn:hover {
-      background-color: #ffcc80;
+    .zoom-icon:hover {
+      color: #000;
+    }
+    /* 모달 */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      padding-top: 60px;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.7);
+    }
+    .modal-content {
+      margin: auto;
+      display: block;
+      max-width: 80%;
+      max-height: 80%;
+    }
+    .close {
+      position: absolute;
+      top: 20px;
+      right: 40px;
+      font-size: 40px;
+      color: white;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <h1>🛠 비품 신청 목록</h1>
+  <h1>📦 비품 신청</h1>
 
-  <div class="card-grid">
+  <div class="grid">
     {% for eq in equipments %}
       <div class="card">
-        <img src="{{ eq.image_url or url_for('static', filename='noimage.png') }}" alt="{{ eq.name }}">
+        <span class="zoom-icon" onclick="openModal('{{ eq.image_url }}')">
+          <i class="fas fa-search-plus"></i>
+        </span>
+        <img src="{{ eq.image_url }}" alt="{{ eq.name }}">
         <div class="card-name">{{ eq.name }}</div>
-        <div class="card-price">{{ eq.unit_price | default(0) | int }}원 | 재고: {{ eq.stock }}</div>
-        <input type="number" id="quantity_{{ eq.id }}" min="1" max="99" value="1">
-        <button class="btn" onclick="submitEquipmentRequest({{ eq.id }})">신청하기</button>
+        <div class="card-price">{{ eq.unit_price | default(0) | int }}원 | 재고: {{ eq.stock | default(0) }}</div>
+        <button class="btn" onclick="submitRequest({{ eq.id }})">신청하기</button>
       </div>
     {% endfor %}
   </div>
 
-  <div style="text-align:center;">
-    <a href="/user/home" class="back-btn">← 사용자 홈으로</a>
+  <!-- 이미지 모달 -->
+  <div id="imgModal" class="modal" onclick="closeModal()">
+    <span class="close">&times;</span>
+    <img class="modal-content" id="modalImg">
   </div>
 
   <script>
-    function submitEquipmentRequest(id) {
-      const quantity = document.getElementById(`quantity_${id}`).value;
-      fetch("/user/equipment/request", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `equipment_id=${id}&quantity=${quantity}`
-      })
-      .then(res => res.json())
-      .then(data => alert(data.success ? "비품 신청 완료!" : "실패: " + data.message));
+    function submitRequest(id) {
+      const quantity = prompt("신청 수량을 입력하세요:");
+      if (quantity && !isNaN(quantity)) {
+        fetch('/user/equipment/request', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ equipment_id: id, quantity: quantity })
+        })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message);
+          if (data.success) location.reload();
+        });
+      }
+    }
+
+    function openModal(url) {
+      const modal = document.getElementById("imgModal");
+      const modalImg = document.getElementById("modalImg");
+      modal.style.display = "block";
+      modalImg.src = url;
+    }
+
+    function closeModal() {
+      document.getElementById("imgModal").style.display = "none";
     }
   </script>
 </body>
 </html>
-

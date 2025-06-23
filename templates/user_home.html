@@ -129,7 +129,7 @@
   <div class="top-bar">
     <div class="logo">아름다운가게</div>
     <div class="user-info-box">
-      <div class="user-name">{{ store_name or '사용자' }}님 어서오세요</div>
+      <div class="user-name">{{ store_name }}님 어서오세요</div>
       <div style="display: flex; gap: 10px; align-items: center;">
         <div id="clock" class="clock-box">--:--</div>
         <a href="{{ url_for('logout') }}"><button class="logout-button">로그아웃</button></a>
@@ -139,26 +139,29 @@
 
   <div class="container">
 
-    <!-- 📦 새로운 상품 -->
-    <div class="section">
-      <h2>
-        📦 새로운 상품!
-        <a href="/user/items" class="btn-small">더보기</a>
-      </h2>
-      <div class="card-grid">
-        {% for item in items %}
-        <div class="card">
-          <img src="{{ item.image_url or '/static/uploads/noimage.png' }}" alt="{{ item.name }}">
-          <button class="zoom-btn" onclick="openImageModal('{{ item.image_url or '/static/uploads/noimage.png' }}')"><i class="fas fa-search-plus"></i></button>
-          <div class="card-name">{{ item.name }}</div>
-          <div class="card-price">{{ item.price | default(0) | round | int }}원</div>
-          <input type="number" id="quantity-{{ item.id }}" min="1" max="99" value="1" style="width: 60px;">
-          <button class="btn" onclick="submitRequestDirect({{ item.id }})">신청하기</button>
-        </div>
-        {% endfor %}
-      </div>
+<!-- 📦 새로운 상품 -->
+<div class="section">
+  <h2>
+    📦 새로운 상품!
+    <a href="/user/items" class="btn-small">더보기</a>
+  </h2>
+  <div class="card-grid">
+    {% for item in items %}
+    <div class="card">
+      <img src="{{ item.image_url or url_for('static', filename='uploads/noimage.png') }}"
+           alt="{{ item.name }}"
+           onerror="this.onerror=null; this.src='{{ url_for('static', filename='uploads/noimage.png') }}';">
+      <button class="zoom-btn" onclick="openImageModal('{{ item.image_url or url_for('static', filename='uploads/noimage.png') }}')">
+        <i class="fas fa-search-plus"></i>
+      </button>
+      <div class="card-name">{{ item.name }}</div>
+      <div class="card-price">{{ item.price | default(0) | int }}원</div>
+      <input type="number" id="quantity-{{ item.id }}" min="1" max="99" value="1" style="width: 60px;">
+      <button class="btn" onclick="submitRequestDirect({{ item.id }})">신청하기</button>
     </div>
-
+    {% endfor %}
+  </div>
+</div>
     <!-- 🚚 입고 일정 -->
     <div class="section">
       <h2>🚚 입고 일정 <a href="{{ url_for('user_schedule') }}" class="btn-small">더보기</a></h2>
@@ -205,7 +208,7 @@
         <div class="card">
           <img src="{{ eq.image_url or '/static/uploads/noimage.png' }}" alt="{{ eq.name }}">
           <div class="card-name">{{ eq.name }}</div>
-          <div class="card-price">{{ eq.unit_price | default(0) | round | int }}원 | 재고: {{ eq.stock or 0 }}</div>
+          <div class="card-price">{{ eq.unit_price | default(0) | int }}원 | 재고: {{ eq.stock | default(0) }}</div>
           <input type="number" id="quantity_{{ eq.id }}" min="1" max="99" value="1" style="width: 60px;">
           <button class="btn" onclick="submitEquipmentRequest({{ eq.id }})">신청하기</button>
         </div>
@@ -289,4 +292,3 @@
   </script>
 </body>
 </html>
-

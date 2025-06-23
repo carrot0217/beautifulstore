@@ -34,14 +34,19 @@ def upload_to_supabase(file_data, filename, content_type):
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
         "Content-Type": content_type,
-        "x-upsert": "true"
+        "x-upsert": "true"  # 파일 덮어쓰기 허용
     }
+
     response = requests.put(url, data=file_data, headers=headers)
-    if response.status_code == 200:
+
+    if response.status_code in [200, 201]:
+        # 🔁 업로드 성공 → 이미지 URL 반환
         return f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{filename}"
     else:
-        print("Upload failed:", response.text)
+        # ❌ 실패 로그 출력
+        print("[SUPABASE ERROR]", response.status_code, response.text)
         return None
+
 
 
 # ✅ 상품 이미지 재등록 라우트 추가
@@ -243,6 +248,42 @@ def manage_items():
     items = cur.fetchall()
     cur.close(); conn.close()
     return render_template('admin_items.html', items=items, message=message, categories=CATEGORY_LIST)
+
+@app.route('/admin/items/add', methods=['POST'])
+def add_item():
+    name = request.form['name']
+    price = request.form['price']
+    file = request.files['image']
+
+    image_url = ''
+    if file:
+        filename = secure_filename(file.filename)
+        unique_filename = f"{uuid.uuid4().hex}_{filename}"
+        content_type = file.content_type
+
+        # Supabase 업로드
+        success = upload_to_supabase(file.stream.read(), unique_filename, content_type)
+
+        # 업로드 성공 시 URL 생성
+        if success:
+            image_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{unique_filename}"
+        else:
+            flash('이미지 업로드 실패')
+            return redirect(url_for('admin_items'))
+
+    # DB 저장
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO items (name, price, image_url)
+        VALUES (%s, %s, %s)
+    """, (name, price, image_url))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    flash('상품이 등록되었습니다.')
+    return redirect(url_for('admin_items'))
 
 
 @app.route('/admin/items/edit/<int:item_id>', methods=['POST'])
@@ -837,63 +878,92 @@ def download_user_orders():
 
 
 # ----------------------- 사용자 홈 → 대시보드 이동 라우트 -----------------------
+
 @app.route('/user/home')
 def user_home():
-    if 'user_id' not in session:
+    if 'user_id' not in session or session.get('is_admin'):
         return redirect(url_for('login'))
 
     user_id = session['user_id']
-    is_admin = session.get('is_admin', False)
 
     conn = get_connection()
     cur = conn.cursor()
 
-    # 🧩 유저 store_name 조회
+    # 🧩 유저 매장명 조회
     cur.execute("SELECT store_name FROM users WHERE id = %s", (user_id,))
     store_name_row = cur.fetchone()
     store_name = store_name_row[0] if store_name_row else ''
 
-    # 🧩 최근 3일 이내 주문 조회 (✅ 수정: order_date → created_at)
-    three_days_ago = date.today() - timedelta(days=3)
-    cur.execute("""
-        SELECT o.created_at, i.name, o.quantity, o.status, o.reason
-        FROM orders o
-        JOIN items i ON o.item = i.id
-        WHERE o.user_id = %s AND o.created_at >= %s
-        ORDER BY o.created_at DESC
-    """, (user_id, three_days_ago))
-    recent_orders = cur.fetchall()
+    # 🧩 상품 목록
+    cur.execute("SELECT id, name, price, image_url FROM items ORDER BY created_at DESC LIMIT 10")
+    items = [dict(id=row[0], name=row[1], price=row[2], image_url=row[3]) for row in cur.fetchall()]
 
-    # 🧩 입고 예정 내역 조회
+    # 🧩 입고 예정 내역
     cur.execute("""
         SELECT i.name, o.quantity, o.wish_date
         FROM orders o
         JOIN items i ON o.item = i.id
-        WHERE o.user_id = %s AND o.status = '완료'
+        WHERE o.user_id = %s AND o.status = '승인됨'
         ORDER BY o.wish_date ASC
-        LIMIT 3
+        LIMIT 5
     """, (user_id,))
-    schedule_items = cur.fetchall()
+    schedule = [dict(name=row[0], quantity=row[1], delivery_date=row[2]) for row in cur.fetchall()]
 
-    # 🧩 전체 상품 목록
+    # 🧩 최근 상품 주문
     cur.execute("""
-        SELECT id, name, price, image_url, description
-        FROM items
-        ORDER BY id DESC
-        LIMIT 10
-    """)
-    items = cur.fetchall()
+        SELECT o.created_at, i.name, o.quantity, o.status, o.reason
+        FROM orders o
+        JOIN items i ON o.item = i.id
+        WHERE o.user_id = %s
+        ORDER BY o.created_at DESC LIMIT 5
+    """, (user_id,))
+    recent_orders = [dict(order_date=row[0], name=row[1], quantity=row[2], status=row[3], reason=row[4]) for row in cur.fetchall()]
 
-    cur.close()
-    conn.close()
+    # 🧩 최근 비품 신청
+    cur.execute("""
+        SELECT r.created_at, e.name, r.quantity
+        FROM equipment_requests r
+        JOIN equipments e ON r.equipment_id = e.id
+        WHERE r.user_id = %s
+        ORDER BY r.created_at DESC LIMIT 5
+    """, (user_id,))
+    recent_equipment_orders = [dict(request_date=row[0], name=row[1], quantity=row[2]) for row in cur.fetchall()]
+
+    # 🧩 비품 목록
+    cur.execute("SELECT id, name, unit_price, stock, image_url FROM equipments ORDER BY created_at DESC LIMIT 10")
+    equipments = [dict(id=row[0], name=row[1], unit_price=row[2], stock=row[3], image_url=row[4]) for row in cur.fetchall()]
+
+    # 🧩 공지사항
+    cur.execute("SELECT id, title, content, created_at FROM notices ORDER BY created_at DESC LIMIT 5")
+    notices = cur.fetchall()
+
+    # 🧩 받은 쪽지
+    cur.execute("""
+        SELECT u.store_name, m.content, m.created_at
+        FROM messages m
+        JOIN users u ON m.sender_id = u.id
+        WHERE m.recipient = %s
+        ORDER BY m.created_at DESC LIMIT 5
+    """, (user_id,))
+    messages = cur.fetchall()
+
+
+    # 🧩 쪽지 받을 대상
+    cur.execute("SELECT id, store_name, is_admin FROM users WHERE id != %s", (user_id,))
+    recipients = cur.fetchall()
 
     return render_template("user_home.html",
-                           user_id=user_id,
-                           is_admin=is_admin,
-                           store_name=store_name,
-                           items=items,
-                           recent_orders=recent_orders,
-                           schedule_items=schedule_items)
+        store_name=store_name,
+        items=items,
+        schedule=schedule,
+        recent_orders=recent_orders,
+        recent_equipment_orders=recent_equipment_orders,
+        equipments=equipments,
+        notices=notices,
+        messages=messages,
+        recipients=recipients
+    )
+
 
 # ----------------------- 관리자페이지 매장 수정라우트 ----------------------
 @app.route('/admin/users/<int:user_id>/edit_store', methods=['POST'])
@@ -1814,8 +1884,8 @@ def user_equipments():
             "id": row[0],
             "name": row[1],
             "image_url": row[2],
-            "unit_price": row[3],
-            "stock": row[4]
+            "unit_price": row[3] or 0,
+            "stock": row[4] or 0
         })
 
     cur.close()
