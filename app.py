@@ -273,7 +273,7 @@ def manage_items():
                 image_url = upload_to_supabase(file, filename=name)
 
         cur.execute("""
-            INSERT INTO items (name, description, quantity, unit_price, category, image, max_request)
+            INSERT INTO items (name, description, stock, unit_price, category, image_url, max_request)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
         """, (name, description, stock, unit_price, category, image_url, max_request))
         conn.commit()
@@ -281,7 +281,7 @@ def manage_items():
         return redirect(url_for('manage_items', message='added'))
 
     cur.execute("""
-        SELECT id, name, description, quantity, unit_price, category, image, COALESCE(max_request, 0)
+        SELECT id, name, description, stock, unit_price, category, image_url, COALESCE(max_request, 0)
         FROM items ORDER BY id ASC
     """)
     items = cur.fetchall()
@@ -314,7 +314,7 @@ def add_item():
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO items (name, price, category, description, image_url)
+        INSERT INTO items (name, unit_price, category, description, image_url)
         VALUES (%s, %s, %s, %s, %s)
     """, (name, price, category, description, image_url))
     conn.commit()
@@ -323,6 +323,7 @@ def add_item():
 
     flash('✅ 상품이 등록되었습니다.')
     return redirect(url_for('manage_items'))
+
 
 @app.route('/admin/items/edit/<int:item_id>', methods=['POST'])
 def edit_item(item_id):
