@@ -510,43 +510,45 @@ def admin_orders():
     per_page = 5
     offset = (page - 1) * per_page
 
-    query = """ 
-        SELECT o.id, o.wish_date, o.store, i.name, o.quantity, o.status, 
-               o.delivery_date, o.comment, o.cancel_reason
+    base_query = """
         FROM orders o
-        JOIN items i ON CAST(o.item AS INTEGER) = i.id
+        JOIN items i ON i.id::TEXT = o.item
         WHERE 1=1
     """
+    query_conditions = ""
     params = []
 
     if status and status != '전체':
-        query += " AND o.status = %s"
+        query_conditions += " AND o.status = %s"
         params.append(status)
     if start_date:
-        query += " AND o.wish_date >= %s"
+        query_conditions += " AND o.wish_date >= %s"
         params.append(start_date)
     if end_date:
-        query += " AND o.wish_date <= %s"
+        query_conditions += " AND o.wish_date <= %s"
         params.append(end_date)
     if keyword:
-        query += " AND (i.name ILIKE %s OR o.store ILIKE %s)"
+        query_conditions += " AND (i.name ILIKE %s OR o.store ILIKE %s)"
         params += [f"%{keyword}%", f"%{keyword}%"]
 
-    query += " ORDER BY o.wish_date DESC, o.id DESC"
+    data_query = f"""
+        SELECT o.id, o.wish_date, o.store, i.name, o.quantity, o.status, 
+               o.delivery_date, o.comment
+        {base_query}
+        {query_conditions}
+        ORDER BY o.wish_date DESC, o.id DESC
+        LIMIT {per_page} OFFSET {offset}
+    """
+
+    count_query = f"SELECT COUNT(*) {base_query} {query_conditions}"
 
     conn = get_connection()
     cur = conn.cursor()
-
-    # 총 개수 계산용 쿼리
-    count_query = "SELECT COUNT(*) FROM (" + query.replace(
-        "SELECT o.id, o.wish_date, o.store, i.name, o.quantity, o.status, o.delivery_date, o.comment, o.cancel_reason",
-        "SELECT 1") + ") AS sub"
     cur.execute(count_query, params)
     total = cur.fetchone()[0]
     total_pages = max(1, (total + per_page - 1) // per_page)
 
-    query += f" LIMIT {per_page} OFFSET {offset}"
-    cur.execute(query, params)
+    cur.execute(data_query, params)
     orders = cur.fetchall()
     cur.close(); conn.close()
 
