@@ -273,7 +273,7 @@ def manage_items():
                 image_url = upload_to_supabase(file, filename=name)
 
         cur.execute("""
-            INSERT INTO items (name, description, stock, unit_price, category, image_url, max_request)
+            INSERT INTO items (name, description, quantity, unit_price, category, image_url, max_request)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
         """, (name, description, stock, unit_price, category, image_url, max_request))
         conn.commit()
@@ -281,7 +281,7 @@ def manage_items():
         return redirect(url_for('manage_items', message='added'))
 
     cur.execute("""
-        SELECT id, name, description, stock, unit_price, category, image_url, COALESCE(max_request, 0)
+        SELECT id, name, description, quantity, unit_price, category, image, COALESCE(max_request, 0)
         FROM items ORDER BY id ASC
     """)
     items = cur.fetchall()
