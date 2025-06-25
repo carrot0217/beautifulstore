@@ -443,7 +443,7 @@ def dashboard():
 
     # 받은 쪽지
     cur.execute("""
-        SELECT sender, content, TO_CHAR(timestamp, 'YYYY-MM-DD HH24:MI')
+        SELECT id, sender_id, content, TO_CHAR(timestamp, 'YYYY-MM-DD HH24:MI') AS timestamp
         FROM messages
         WHERE recipient = %s
         ORDER BY timestamp DESC

@@ -261,7 +261,7 @@
             data.messages.forEach(msg => {
               msgList.innerHTML += `
                 <div class="msg-item" id="msg-${msg.id}">
-                  <strong>${msg.sender}</strong>
+                  <strong>${msg.sender_id}</strong>
                   ${msg.content}<br>
                   <small>${msg.timestamp}</small><br>
                   <button onclick="deleteMessage(${msg.id})" style="margin-top:6px; font-size:0.8em; background:#fdd; border:none; padding:4px 8px; border-radius:6px; cursor:pointer;">🗑 삭제</button>
