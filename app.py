@@ -1,15 +1,19 @@
 import os
 import requests
+from dotenv import load_dotenv
+load_dotenv()
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify, abort
 from werkzeug.utils import secure_filename
 from db import get_connection
 from datetime import datetime, date, timedelta
-from dotenv import load_dotenv
 import pandas as pd
 import io
 import uuid
 
-load_dotenv()
+# ✅ 이 줄 추가
+from psycopg2.extras import DictCursor
+
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -23,31 +27,71 @@ CATEGORY_LIST = [
 ]
 
 
-SUPABASE_URL = os.getenv('SUPABASE_URL')
-SUPABASE_KEY = os.getenv('SUPABASE_KEY')
-SUPABASE_BUCKET = os.getenv('SUPABASE_BUCKET')  # ✅ 실제 존재하는 Public 버킷
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET")
 
-# Supabase 파일 업로드 함수 (REST API 방식)
-def upload_to_supabase(file_data, filename, content_type):
-    url = f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_BUCKET}/{filename}"
-    headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": content_type,
-        "x-upsert": "true"  # 파일 덮어쓰기 허용
-    }
+def upload_to_supabase(file, filename):
+    try:
+        # 확장자 추출 및 고유 파일명 생성
+        ext = os.path.splitext(file.filename)[1].lower()
+        unique_filename = f"{uuid.uuid4().hex}{ext}"
+        
+        # Supabase 업로드 경로 (PUT 방식)
+        upload_url = f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_BUCKET}/{unique_filename}"
 
-    response = requests.put(url, data=file_data, headers=headers)
+        # 요청 헤더 설정
+        headers = {
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+            "Content-Type": file.content_type or "application/octet-stream",
+            "x-upsert": "true"  # 같은 이름이면 덮어쓰기
+        }
 
-    if response.status_code in [200, 201]:
-        # 🔁 업로드 성공 → 이미지 URL 반환
-        return f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{filename}"
-    else:
-        # ❌ 실패 로그 출력
-        print("[SUPABASE ERROR]", response.status_code, response.text)
+        # 파일 스트림 초기화 후 업로드
+        file.stream.seek(0)
+        file_bytes = file.read()
+        response = requests.put(upload_url, headers=headers, data=file_bytes)
+
+        # 응답 처리
+        if response.status_code in [200, 201]:
+            public_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{unique_filename}"
+            print("✅ Supabase 이미지 업로드 성공:", public_url)
+            return public_url
+        else:
+            print("❌ 업로드 실패:", response.status_code, response.text)
+            return None
+
+    except Exception as e:
+        print("❌ 예외 발생:", str(e))
         return None
 
+# ✅ 상품 업로드 및 DB 저장 라우트
+@app.route("/admin/items/upload", methods=["POST"])
+def upload_item():
+    name = request.form.get("name")
+    price = request.form.get("price", 0)
+    file = request.files.get("image")
 
+    if not file or not name:
+        return jsonify(success=False, message="필수 정보 누락")
+
+    image_url = upload_to_supabase(file)
+    if not image_url:
+        return jsonify(success=False, message="이미지 업로드 실패")
+
+    # PostgreSQL에 저장
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO items (name, price, image_url)
+        VALUES (%s, %s, %s)
+    """, (name, price, image_url))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify(success=True, message="상품 업로드 완료", image_url=image_url)
 
 # ✅ 상품 이미지 재등록 라우트 추가
 @app.route('/admin/items/update_image/<int:item_id>', methods=['POST'])
@@ -204,7 +248,6 @@ def admin_delete_order():
 
 
 
-# ----------------------- 상품 등록/수정/삭제 -----------------------
 @app.route('/admin/items', methods=['GET', 'POST'])
 def manage_items():
     if not session.get('is_admin'):
@@ -227,11 +270,7 @@ def manage_items():
         if 'image' in request.files and request.files['image']:
             file = request.files['image']
             if file and file.filename:
-                ext = os.path.splitext(file.filename)[1]
-                unique_filename = f"{uuid.uuid4().hex}{ext}"
-                content_type = file.content_type
-                file_data = file.read()
-                image_url = upload_to_supabase(file_data, file.filename, content_type)
+                image_url = upload_to_supabase(file, filename=name)
 
         cur.execute("""
             INSERT INTO items (name, description, quantity, unit_price, category, image, max_request)
@@ -249,42 +288,41 @@ def manage_items():
     cur.close(); conn.close()
     return render_template('admin_items.html', items=items, message=message, categories=CATEGORY_LIST)
 
+
+# ✅ 상품 등록 라우트
 @app.route('/admin/items/add', methods=['POST'])
 def add_item():
-    name = request.form['name']
-    price = request.form['price']
-    file = request.files['image']
+    if 'user_id' not in session or not session.get('is_admin'):
+        return redirect(url_for('login'))
 
+    name = request.form.get('name')
+    price = request.form.get('price')
+    category = request.form.get('category')
+    description = request.form.get('description')
+    file = request.files.get('image')
+
+    if not name or not price or not category:
+        flash('❗ 모든 필수 항목을 입력해 주세요.')
+        return redirect(url_for('manage_items'))
+
+    # 이미지 업로드 처리
     image_url = ''
-    if file:
-        filename = secure_filename(file.filename)
-        unique_filename = f"{uuid.uuid4().hex}_{filename}"
-        content_type = file.content_type
-
-        # Supabase 업로드
-        success = upload_to_supabase(file.stream.read(), unique_filename, content_type)
-
-        # 업로드 성공 시 URL 생성
-        if success:
-            image_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{unique_filename}"
-        else:
-            flash('이미지 업로드 실패')
-            return redirect(url_for('admin_items'))
+    if file and file.filename != '':
+        image_url = upload_to_supabase(file, filename=name)
 
     # DB 저장
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO items (name, price, image_url)
-        VALUES (%s, %s, %s)
-    """, (name, price, image_url))
+        INSERT INTO items (name, price, category, description, image_url)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (name, price, category, description, image_url))
     conn.commit()
     cur.close()
     conn.close()
 
-    flash('상품이 등록되었습니다.')
-    return redirect(url_for('admin_items'))
-
+    flash('✅ 상품이 등록되었습니다.')
+    return redirect(url_for('manage_items'))
 
 @app.route('/admin/items/edit/<int:item_id>', methods=['POST'])
 def edit_item(item_id):
@@ -299,17 +337,20 @@ def edit_item(item_id):
     max_request = int(max_request) if max_request else None
     category = request.form.get('category', '')
 
-    image_url = None
+    # 기존 이미지 URL 유지
+    cur.execute("SELECT image FROM items WHERE id = %s", (item_id,))
+    existing_image_row = cur.fetchone()
+    image_url = existing_image_row[0] if existing_image_row else None
+
     file = request.files.get('image')
 
     if file and file.filename != '':
         ext = os.path.splitext(file.filename)[1]
         unique_filename = f"{uuid.uuid4().hex}{ext}"
-        content_type = file.content_type
-        file_data = file.read()
-        image_url = upload_to_supabase(file_data, unique_filename, content_type)
+        file.stream.seek(0)  # 반드시 stream의 시작으로 위치 설정
+        image_url = upload_to_supabase(file, unique_filename)  # ✅ 수정: 인자 2개
 
-        print(f"[이미지 URL 생성됨] → {image_url}")  # ✅ 로그 추가
+        print(f"[이미지 URL 생성됨] → {image_url}")
 
         # DB에 이미지 포함 업데이트
         cur.execute("""
@@ -319,7 +360,7 @@ def edit_item(item_id):
             WHERE id=%s
         """, (name, description, stock, unit_price, category, max_request, image_url, item_id))
     else:
-        print("[이미지 없음] 기존 이미지 유지")  # ✅ 로그 추가
+        print("[이미지 없음] 기존 이미지 유지")
 
         # DB에 이미지 제외 업데이트
         cur.execute("""
@@ -333,7 +374,6 @@ def edit_item(item_id):
     cur.close()
     conn.close()
     return redirect(url_for('manage_items', message='updated'))
-
 
 
 @app.route('/admin/items/delete/<int:item_id>', methods=['POST'])
@@ -351,40 +391,29 @@ def delete_item(item_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        user_id = request.form.get('user_id')
-        password = request.form.get('password')
-
-        if not user_id or not password:
-            flash('❗ 아이디와 비밀번호를 모두 입력해주세요.')
-            return render_template('login.html')
+        username = request.form['username']
+        password = request.form['password']
 
         conn = get_connection()
         cur = conn.cursor()
-        cur.execute("SELECT password, is_admin, store, store_name FROM users WHERE username = %s", (user_id,))
-        result = cur.fetchone()
-        cur.close()
+        cur.execute("SELECT id, password, is_admin, store_name FROM users WHERE username = %s", (username,))
+        user = cur.fetchone()
         conn.close()
 
-        if result:
-            db_password, is_admin, store, store_name = result
-            print("회원 로그인 - 매장명:", store)  # 확인위한 debug print
-            if password == db_password:
-                session['user_id'] = user_id
-                session['is_admin'] = is_admin
-                session['store_name'] = store_name  # 대입 값 확인
-
-                if is_admin:
-                    return redirect(url_for('dashboard'))
-                else:
-                    return redirect(url_for('user_home'))
+        if user and user[1] == password:
+            session['user_id'] = user[0]
+            session['is_admin'] = user[2]
+            session['store_name'] = user[3]
+            if user[2]:
+                return redirect(url_for('admin_home'))
             else:
-                flash('❌ 비밀번호가 일치하지 않습니다.')
+                return redirect(url_for('user_home'))
         else:
-            flash('❌ 존재하지 않는 사용자입니다.')
-
+            flash('로그인 정보가 올바르지 않습니다.')
+            return redirect(url_for('login'))
     return render_template('login.html')
 
-# -------------------- 로그아웃 라우트 --------------------
+# ✅ 로그아웃
 @app.route('/logout')
 def logout():
     session.clear()
@@ -845,44 +874,11 @@ def delete_user_order(order_id):
     return jsonify(success=True)
 
 # ----------------------- 사용자 주문 엑셀다운로드 -----------------------
-@app.route('/user/orders/download')
-def download_user_orders():
-    if 'user_id' not in session or session.get('is_admin'):
-        return redirect(url_for('login'))
-
-    user_id = session['user_id']
-
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT o.created_at, i.name, o.quantity, o.status, o.delivery_date
-        FROM orders o
-        JOIN items i ON CAST(o.item AS INTEGER) = i.id
-        WHERE o.user_id = %s
-        ORDER BY o.created_at DESC
-    """, (user_id,))
-    rows = cur.fetchall()
-    cur.close(); conn.close()
-
-    # DataFrame 변환
-    df = pd.DataFrame(rows, columns=['신청일', '상품명', '수량', '상태', '배송일'])
-
-    # 엑셀로 저장
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False, sheet_name='주문내역')
-
-    output.seek(0)
-    filename = f"{user_id}_orders.xlsx"
-    return send_file(output, download_name=filename, as_attachment=True)
-
-
-# ----------------------- 사용자 홈 → 대시보드 이동 라우트 -----------------------
-
 @app.route('/user/home')
 def user_home():
     if 'user_id' not in session or session.get('is_admin'):
         return redirect(url_for('login'))
+    return render_template('user_home.html')
 
     user_id = session['user_id']
 
@@ -1138,10 +1134,11 @@ def download_stats():
     return send_file(output, as_attachment=True,
                      download_name=f"order_stats_{now}.xlsx",
                      mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-# ----------------------- 관리자 홈 -----------------------
+
+# ✅ 관리자 홈 예시 라우트
 @app.route('/admin/home')
 def admin_home():
-    if not session.get('is_admin'):
+    if 'user_id' not in session or not session.get('is_admin'):
         return redirect(url_for('login'))
     return render_template('admin_home.html')
 
@@ -1936,7 +1933,7 @@ def delete_equipments():
 
 # ----------------------- 서버 실행 -----------------------
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000, debug=True)
+    app.run(debug=True)
 
 # ----------------------- 루트 경로 -----------------------
 @app.route('/')
