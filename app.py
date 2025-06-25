@@ -437,32 +437,54 @@ def dashboard():
     if not session.get('is_admin'):
         return redirect(url_for('login'))
 
-    username = session['user_id']
+    user_id = session['user_id']
     conn = get_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=DictCursor)  # ✅ 딕셔너리 형태로 불러오기
 
-    # 받은 쪽지
+    # 1️⃣ 받은 쪽지 조회 (sender_id만 있음 → 후에 username으로 매핑)
     cur.execute("""
-        SELECT id, sender_id, content, TO_CHAR(timestamp, 'YYYY-MM-DD HH24:MI') AS timestamp
+        SELECT sender_id, content, TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI') AS timestamp
         FROM messages
-        WHERE recipient = %s
-        ORDER BY timestamp DESC
-    """, (username,))
-    messages = cur.fetchall()
+        WHERE receiver_id = %s
+        ORDER BY created_at DESC
+    """, (user_id,))
+    raw_messages = cur.fetchall()
 
-    # 받는 사람 목록
+    # 2️⃣ 발신자 ID 목록만 추출
+    sender_ids = list({msg['sender_id'] for msg in raw_messages if msg['sender_id'] is not None})
+
+    # 3️⃣ 발신자 ID → username 매핑 딕셔너리 만들기
+    sender_map = {}
+    if sender_ids:
+        cur.execute("SELECT id, username FROM users WHERE id IN %s", (tuple(sender_ids),))
+        sender_rows = cur.fetchall()
+        sender_map = {row['id']: row['username'] for row in sender_rows}
+
+    # 4️⃣ 최종 메시지 리스트 생성
+    messages = []
+    for msg in raw_messages:
+        sender_name = sender_map.get(msg['sender_id'], '알 수 없음')
+        messages.append({
+            'sender': sender_name,
+            'content': msg['content'],
+            'timestamp': msg['timestamp']
+        })
+
+    # 5️⃣ 받는 사용자 목록 조회
     cur.execute("""
         SELECT username, store_name
         FROM users
-        WHERE username != %s AND store_name IS NOT NULL AND store_name != ''
+        WHERE id != %s AND store_name IS NOT NULL AND store_name != ''
         ORDER BY username
-    """, (username,))
+    """, (user_id,))
     recipients = cur.fetchall()
 
     cur.close()
     conn.close()
 
     return render_template('admin_dashboard.html', messages=messages, recipients=recipients)
+
+
 
 # ----------------------- 관리자 주문 목록 조회 -----------------------
 @app.route('/admin/orders')
