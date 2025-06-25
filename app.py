@@ -391,7 +391,7 @@ def delete_item(item_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        user_id = request.form.get('user_id')
+        user_id = request.form.get('username')  # ✅ 여기 수정!
         password = request.form.get('password')
 
         if not user_id or not password:
@@ -406,12 +406,12 @@ def login():
         conn.close()
 
         if result:
-            db_password, is_admin, store, store_name = result
-            print("회원 로그인 - 매장명:", store)  # 확인위한 debug print
+            db_password, is_admin, store_name = result
+            print("회원 로그인 - 매장명:", store_name)
             if password == db_password:
                 session['user_id'] = user_id
                 session['is_admin'] = is_admin
-                session['store_name'] = store_name  # 대입 값 확인
+                session['store_name'] = store_name
 
                 if is_admin:
                     return redirect(url_for('dashboard'))
@@ -423,6 +423,7 @@ def login():
             flash('❌ 존재하지 않는 사용자입니다.')
 
     return render_template('login.html')
+
 
 # -------------------- 로그아웃 라우트 --------------------
 @app.route('/logout')

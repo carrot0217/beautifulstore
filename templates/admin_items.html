@@ -15,8 +15,8 @@
     th { background-color: #ffcc80; }
     td { background-color: #fffde7; vertical-align: middle; }
     td input { width: 100%; box-sizing: border-box; }
-    .thumbnail { width: 50px; height: 50px; object-fit: cover; position: relative; }
-    .zoom-icon { position: absolute; top: 0; right: 0; background-color: rgba(255,255,255,0.8); padding: 2px; border-radius: 50%; cursor: pointer; }
+    .thumbnail { width: 60px; height: 60px; object-fit: cover; border: 1px solid #ddd; border-radius: 6px; }
+    .zoom-icon { position: absolute; bottom: 2px; right: 2px; background: #ffcc80; padding: 2px 6px; font-size: 0.8em; border-radius: 4px; cursor: pointer; box-shadow: 0 0 2px rgba(0,0,0,0.2); }
     .price-input-wrapper { display: flex; align-items: center; justify-content: center; gap: 4px; }
     .price-input-wrapper input { width: 80px; text-align: right; }
     .btn-edit, .btn-delete, .btn-add {
@@ -34,17 +34,13 @@
     .btn-emoji { display: block; font-size: 1.5em; line-height: 1.05; }
     .btn-label { display: block; font-size: 0.85em; margin-top: 4px; }
     .form-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-    #customModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background-color: rgba(0, 0, 0, 0.5); z-index: 9999; justify-content: center; align-items: center; }
-    #customModal .content {
-      background: white; padding: 30px 40px; border-radius: 20px;
-      box-shadow: 0 0 40px #fff8d8; text-align: center;
-    }
+    #customModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; justify-content: center; align-items: center; }
+    #customModal .content { background: white; padding: 30px 40px; border-radius: 20px; box-shadow: 0 0 40px #fff8d8; text-align: center; }
   </style>
   <script>
     function openPopup(imageUrl) {
-      const popup = window.open('', 'ImagePopup', 'width=400,height=400');
-      popup.document.write('<img src="' + imageUrl + '" style="width=100%">');
+      const popup = window.open('', 'ImagePopup', 'width=600,height=600');
+      popup.document.write(`<img src="${imageUrl}" style="width:100%; height:auto;">`);
     }
     function openModal(icon, message) {
       document.getElementById('modalIcon').innerText = icon;
@@ -120,47 +116,49 @@
       <th>저장</th>
       <th>삭제</th>
     </tr>
-{% for item in items %}
-<tr>
-  <form method="POST" enctype="multipart/form-data" action="/admin/items/edit/{{ item[0] }}">
-    <td><input type="text" name="name" value="{{ item[1] }}" required></td>
-    <td><input type="text" name="category" value="{{ item[5] or '' }}" required></td>
-    <td><input type="text" name="description" value="{{ item[2] }}"></td>
-    <td><input type="number" name="stock" value="{{ item[3] }}" required></td>
-    <td>
-      <div class="price-input-wrapper">
-        <input type="number" name="unit_price" value="{{ item[4]|int }}" required>
-        <span>원</span>
-      </div>
-    </td>
-    <td><input type="number" name="max_request" value="{{ item[7] or 0 }}" required></td>
-    <td>
-      {% if item[6] %}
-      <div style="position: relative; display: inline-block;">
-        <img src="{{ item[6] }}" class="thumbnail" onerror="this.style.display='none'">
-        <span class="zoom-icon" onclick="openPopup('{{ item[6] }}')">🔍</span>
-      </div>
-      {% else %}-{% endif %}
-      <div style="margin-top: 6px;">
-        <input type="file" name="image" accept="image/*">
-        <small style="font-size: 0.8em; color: #666;">※ 새 이미지 선택 시 기존 이미지가 변경됩니다.</small>
-      </div>
-    </td>
-    <td>
-      <button type="submit" class="btn-edit">
-        <span class="btn-emoji">📂</span><span class="btn-label">수정</span>
-      </button>
-    </td>
-  </form>
-  <td>
-    <form method="POST" action="/admin/items/delete/{{ item[0] }}">
-      <button type="submit" class="btn-delete" onclick="return confirm('정말 삭제하시겠습니까?');">
-        <span class="btn-emoji">❌</span><span class="btn-label">삭제</span>
-      </button>
-    </form>
-  </td>
-</tr>
-{% endfor %}
+    {% for item in items %}
+    <tr>
+      <form method="POST" enctype="multipart/form-data" action="/admin/items/edit/{{ item[0] }}">
+        <td><input type="text" name="name" value="{{ item[1] }}" required></td>
+        <td><input type="text" name="category" value="{{ item[5] or '' }}" required></td>
+        <td><input type="text" name="description" value="{{ item[2] }}"></td>
+        <td><input type="number" name="stock" value="{{ item[3] }}" required></td>
+        <td>
+          <div class="price-input-wrapper">
+            <input type="number" name="unit_price" value="{{ item[4]|int }}" required>
+            <span>원</span>
+          </div>
+        </td>
+        <td><input type="number" name="max_request" value="{{ item[7] or 0 }}" required></td>
+        <td style="text-align: center;">
+          {% if item[6] %}
+          <div style="position: relative; display: inline-block;">
+            <img src="{{ item[6] }}" class="thumbnail" onerror="this.style.display='none'">
+            <span class="zoom-icon" onclick="openPopup('{{ item[6] }}')">🔍</span>
+          </div>
+          {% else %}
+            <span style="color: #bbb;"><i class="fas fa-image"></i> 없음</span>
+          {% endif %}
+          <div style="margin-top: 6px;">
+            <input type="file" name="image" accept="image/*">
+            <small style="font-size: 0.8em; color: #666;">※ 새 이미지 선택 시 기존 이미지가 변경됩니다.</small>
+          </div>
+        </td>
+        <td>
+          <button type="submit" class="btn-edit">
+            <span class="btn-emoji">📂</span><span class="btn-label">수정</span>
+          </button>
+        </td>
+      </form>
+      <td>
+        <form method="POST" action="/admin/items/delete/{{ item[0] }}">
+          <button type="submit" class="btn-delete" onclick="return confirm('정말 삭제하시겠습니까?');">
+            <span class="btn-emoji">❌</span><span class="btn-label">삭제</span>
+          </button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
   </table>
 
   <div id="customModal">
@@ -172,3 +170,4 @@
   </div>
 </body>
 </html>
+

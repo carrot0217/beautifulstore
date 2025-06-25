@@ -129,15 +129,25 @@
   <div class="top-bar">
     <div class="logo">아름다운가게</div>
     <div class="user-info-box">
-      <div class="user-name">{{ store_name }}님 어서오세요</div>
+      <div class="user-name">
+        {% if store_name %}
+          {{ store_name }}님 어서오세요
+        {% else %}
+          이용자님 어서오세요
+        {% endif %}
+      </div>
       <div style="display: flex; gap: 10px; align-items: center;">
         <div id="clock" class="clock-box">--:--</div>
-        <a href="{{ url_for('logout') }}"><button class="logout-button">로그아웃</button></a>
+        <a href="{{ url_for('logout') }}">
+          <button class="logout-button">로그아웃</button>
+        </a>
       </div>
     </div>
   </div>
 
+
   <div class="container">
+
 
 <!-- 📦 새로운 상품 -->
 <div class="section">
@@ -162,6 +172,7 @@
     {% endfor %}
   </div>
 </div>
+
     <!-- 🚚 입고 일정 -->
     <div class="section">
       <h2>🚚 입고 일정 <a href="{{ url_for('user_schedule') }}" class="btn-small">더보기</a></h2>
