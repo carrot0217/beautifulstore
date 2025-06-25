@@ -502,70 +502,62 @@ def admin_orders():
     if not session.get('is_admin'):
         return redirect(url_for('login'))
 
-    status = request.args.get('status', '전체')
-    start_date = request.args.get('start_date', '')
-    end_date = request.args.get('end_date', '')
-    keyword = request.args.get('keyword', '').strip()
-    page = int(request.args.get('page', 1))
-    per_page = 5
-    offset = (page - 1) * per_page
-
-    base_query = """
-        FROM orders o
-        JOIN items i ON i.id = o.item::INTEGER
-        WHERE 1=1
-    """
-    query_conditions = ""
-    params = []
-
-    if status and status != '전체':
-        query_conditions += " AND o.status = %s"
-        params.append(status)
-    if start_date:
-        query_conditions += " AND o.wish_date >= %s"
-        params.append(start_date)
-    if end_date:
-        query_conditions += " AND o.wish_date <= %s"
-        params.append(end_date)
-    if keyword:
-        query_conditions += " AND (i.name ILIKE %s OR o.store ILIKE %s)"
-        params += [f"%{keyword}%", f"%{keyword}%"]
-
-    data_query = f"""
-        SELECT o.id, o.wish_date, o.store, i.name, o.quantity, o.status, 
-               o.delivery_date, o.comment
-        {base_query}
-        {query_conditions}
-        ORDER BY o.wish_date DESC, o.id DESC
-        LIMIT {per_page} OFFSET {offset}
-    """
-
-    count_query = f"SELECT COUNT(*) {base_query} {query_conditions}"
-
     conn = get_connection()
     cur = conn.cursor()
+
+    status = request.args.get('status', '')
+    start_date = request.args.get('start_date', '')
+    end_date = request.args.get('end_date', '')
+    keyword = request.args.get('keyword', '')
+    page = int(request.args.get('page', 1))
+    limit = 20
+    offset = (page - 1) * limit
+
+    # 🔍 기본 쿼리
+    base_query = """
+        SELECT o.id, o.created_at, u.store_name, i.name, o.quantity, o.status, o.delivery_date, o.wish_date, o.reason
+        FROM orders o
+        JOIN users u ON o.user_id = u.id
+        JOIN items i ON o.item = i.id
+        WHERE 1=1
+    """
+    params = []
+
+    if status:
+        base_query += " AND o.status = %s"
+        params.append(status)
+    if start_date:
+        base_query += " AND o.created_at >= %s"
+        params.append(start_date)
+    if end_date:
+        base_query += " AND o.created_at <= %s"
+        params.append(end_date)
+    if keyword:
+        base_query += " AND (u.store_name ILIKE %s OR i.name ILIKE %s)"
+        params += [f"%{keyword}%", f"%{keyword}%"]
+
+    # 🔢 페이지네이션
+    count_query = "SELECT COUNT(*) FROM (" + base_query + ") AS count_subquery"
     cur.execute(count_query, params)
-    total = cur.fetchone()[0]
-    total_pages = max(1, (total + per_page - 1) // per_page)
+    total_count = cur.fetchone()[0]
+    total_pages = (total_count + limit - 1) // limit
 
-    cur.execute(data_query, params)
+    base_query += " ORDER BY o.created_at DESC LIMIT %s OFFSET %s"
+    params += [limit, offset]
+
+    cur.execute(base_query, params)
     orders = cur.fetchall()
-    cur.close(); conn.close()
 
-    now = date.today()
-    status_choices = ['전체', '대기 중', '배송중', '완료', '취소됨', '취소됨(재고부족)', '삭제됨']
-
-    return render_template(
-        'admin_orders.html',
+    conn.close()
+    return render_template('admin_orders.html',
         orders=orders,
-        now=now,
         status=status,
         start_date=start_date,
         end_date=end_date,
         keyword=keyword,
         page=page,
         total_pages=total_pages,
-        status_choices=status_choices
+        status_choices=["", "대기 중", "승인", "취소됨", "삭제됨"]
     )
 
 # ----------------------- 관리자 주문 코멘트 수정 -----------------------
