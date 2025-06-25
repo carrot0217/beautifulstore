@@ -391,29 +391,40 @@ def delete_item(item_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        user_id = request.form.get('user_id')
+        password = request.form.get('password')
+
+        if not user_id or not password:
+            flash('❗ 아이디와 비밀번호를 모두 입력해주세요.')
+            return render_template('login.html')
 
         conn = get_connection()
         cur = conn.cursor()
-        cur.execute("SELECT id, password, is_admin, store_name FROM users WHERE username = %s", (username,))
-        user = cur.fetchone()
+        cur.execute("SELECT password, is_admin, store_name FROM users WHERE username = %s", (user_id,))
+        result = cur.fetchone()
+        cur.close()
         conn.close()
 
-        if user and user[1] == password:
-            session['user_id'] = user[0]
-            session['is_admin'] = user[2]
-            session['store_name'] = user[3]
-            if user[2]:
-                return redirect(url_for('admin_home'))
+        if result:
+            db_password, is_admin, store, store_name = result
+            print("회원 로그인 - 매장명:", store)  # 확인위한 debug print
+            if password == db_password:
+                session['user_id'] = user_id
+                session['is_admin'] = is_admin
+                session['store_name'] = store_name  # 대입 값 확인
+
+                if is_admin:
+                    return redirect(url_for('dashboard'))
+                else:
+                    return redirect(url_for('user_home'))
             else:
-                return redirect(url_for('user_home'))
+                flash('❌ 비밀번호가 일치하지 않습니다.')
         else:
-            flash('로그인 정보가 올바르지 않습니다.')
-            return redirect(url_for('login'))
+            flash('❌ 존재하지 않는 사용자입니다.')
+
     return render_template('login.html')
 
-# ✅ 로그아웃
+# -------------------- 로그아웃 라우트 --------------------
 @app.route('/logout')
 def logout():
     session.clear()
@@ -878,7 +889,6 @@ def delete_user_order(order_id):
 def user_home():
     if 'user_id' not in session or session.get('is_admin'):
         return redirect(url_for('login'))
-    return render_template('user_home.html')
 
     user_id = session['user_id']
 
@@ -1134,11 +1144,10 @@ def download_stats():
     return send_file(output, as_attachment=True,
                      download_name=f"order_stats_{now}.xlsx",
                      mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-
-# ✅ 관리자 홈 예시 라우트
+# ----------------------- 관리자 홈 -----------------------
 @app.route('/admin/home')
 def admin_home():
-    if 'user_id' not in session or not session.get('is_admin'):
+    if not session.get('is_admin'):
         return redirect(url_for('login'))
     return render_template('admin_home.html')
 
@@ -1933,10 +1942,9 @@ def delete_equipments():
 
 # ----------------------- 서버 실행 -----------------------
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=10000, debug=True)
 
 # ----------------------- 루트 경로 -----------------------
 @app.route('/')
 def index():
     return redirect(url_for('login'))
-
