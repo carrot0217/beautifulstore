@@ -512,7 +512,7 @@ def admin_orders():
 
     base_query = """
         FROM orders o
-        JOIN items i ON i.id::TEXT = o.item
+        JOIN items i ON i.id = o.item::INTEGER
         WHERE 1=1
     """
     query_conditions = ""
