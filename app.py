@@ -305,6 +305,13 @@ def add_item():
         flash('❗ 모든 필수 항목을 입력해 주세요.')
         return redirect(url_for('manage_items'))
 
+    # 가격 숫자 검증
+    try:
+        price = int(price)
+    except (ValueError, TypeError):
+        flash('❗ 가격은 숫자만 입력해 주세요.')
+        return redirect(url_for('manage_items'))
+
     # 이미지 업로드 처리
     image_url = ''
     if file and file.filename != '':
@@ -314,7 +321,7 @@ def add_item():
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
-        INSERT INTO items (name, unit_price, category, description, image_url)
+        INSERT INTO items (name, price, category, description, image_url)
         VALUES (%s, %s, %s, %s, %s)
     """, (name, price, category, description, image_url))
     conn.commit()
@@ -323,7 +330,6 @@ def add_item():
 
     flash('✅ 상품이 등록되었습니다.')
     return redirect(url_for('manage_items'))
-
 
 @app.route('/admin/items/edit/<int:item_id>', methods=['POST'])
 def edit_item(item_id):
