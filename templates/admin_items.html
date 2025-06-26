@@ -83,7 +83,7 @@
       <input type="text" name="name" placeholder="상품명" required>
       <select name="category" onchange="handleCategoryChange(this)">
         <option value="의류">의류</option>
-        <option value="일반자화">일반자화</option>
+        <option value="일반잡화">일반잡화</option>
         <option value="주방용품">주방용품</option>
         <option value="가방/신발">가방/신발</option>
         <option value="도서/DVD">도서/DVD</option>
@@ -92,7 +92,7 @@
         <option value="직접입력">직접입력</option>
       </select>
       <input type="text" id="custom-category" class="hidden-input" placeholder="카테고리 입력">
-      <input type="number" name="unit_price" placeholder="생산단가" required>
+      <input type="number" step="0.01" name="unit_price" placeholder="생산단가" required>
       <input type="number" name="max_request" placeholder="신청제한수량" required>
       <input type="text" name="description" placeholder="설명">
       <input type="number" name="stock" placeholder="재고 수량" required>
@@ -125,7 +125,7 @@
         <td><input type="number" name="stock" value="{{ item[3] }}" required></td>
         <td>
           <div class="price-input-wrapper">
-            <input type="number" name="unit_price" value="{{ item[4]|int }}" required>
+            <input type="number" step="0.01" name="unit_price" value="{{ item[4] }}" required> <!-- ✅ float 유지 -->
             <span>원</span>
           </div>
         </td>

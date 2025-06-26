@@ -303,52 +303,53 @@ def add_item():
     if 'user_id' not in session or not session.get('is_admin'):
         return redirect(url_for('login'))
 
-    name = request.form.get('name', '').strip()
-    category = request.form.get('category', '').strip()
-    description = request.form.get('description', '').strip()
+    name = request.form.get('name')
+    unit_price = request.form.get('unit_price')  # ← 수정
+    category = request.form.get('category')
+    description = request.form.get('description')
     file = request.files.get('image')
+    stock = request.form.get('stock') or 0
+    max_request = request.form.get('max_request') or 0
 
-    # ✅ 가격은 float 허용 + 기본값 0
-    price_input = request.form.get('price', '').strip()
-    try:
-        unit_price = float(price_input)
-    except (ValueError, TypeError):
-        flash('❗ 가격은 숫자만 입력해 주세요.')
-        return redirect(url_for('manage_items'))
+    # 직접입력 카테고리 처리
+    if category == '직접입력':
+        category = request.form.get('custom-category')
 
-    # ✅ 필수 항목 확인
-    if not name or not price_input or not category:
+    if not name or not unit_price or not category:
         flash('❗ 모든 필수 항목을 입력해 주세요.')
         return redirect(url_for('manage_items'))
 
-    # ✅ 이미지 업로드
+    try:
+        unit_price = int(unit_price)
+        stock = int(stock)
+        max_request = int(max_request)
+    except ValueError:
+        flash('❗ 숫자 입력 항목이 올바르지 않습니다.')
+        return redirect(url_for('manage_items'))
+
     image_url = ''
     if file and file.filename != '':
         image_url = upload_to_supabase(file, filename=name)
         if not image_url:
             flash('❗ 이미지 업로드에 실패했습니다.')
-            print("❌ 업로드 실패 → SUPABASE_BUCKET 또는 KEY 확인")
             return redirect(url_for('manage_items'))
 
-    # ✅ DB 저장
     try:
         conn = get_connection()
         cur = conn.cursor()
         cur.execute("""
-            INSERT INTO items (name, unit_price, category, description, image_url)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (name, unit_price, category, description, image_url))
+            INSERT INTO items (name, description, stock, unit_price, category, image_url, max_request)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (name, description, stock, unit_price, category, image_url, max_request))
         conn.commit()
         cur.close()
         conn.close()
 
-        flash('✅ 상품이 등록되었습니다.')
+        return redirect(url_for('manage_items', message="added"))
     except Exception as e:
         print("❌ DB 등록 오류:", str(e))
         flash('❌ 상품 등록 중 오류가 발생했습니다.')
-
-    return redirect(url_for('manage_items'))
-
+        return redirect(url_for('manage_items'))
 
 
 @app.route('/admin/items/edit/<int:item_id>', methods=['POST'])
