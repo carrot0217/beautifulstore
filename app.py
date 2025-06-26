@@ -289,7 +289,6 @@ def manage_items():
     return render_template('admin_items.html', items=items, message=message, categories=CATEGORY_LIST)
 
 
-# ✅ 상품 등록 라우트
 @app.route('/admin/items/add', methods=['POST'])
 def add_item():
     if 'user_id' not in session or not session.get('is_admin'):
@@ -312,12 +311,12 @@ def add_item():
         flash('❗ 가격은 숫자만 입력해 주세요.')
         return redirect(url_for('manage_items'))
 
-    # 이미지 업로드 처리
+    # ✅ Supabase 이미지 업로드
     image_url = ''
     if file and file.filename != '':
         image_url = upload_to_supabase(file, filename=name)
 
-    # DB 저장
+    # ✅ DB 저장
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
@@ -330,6 +329,8 @@ def add_item():
 
     flash('✅ 상품이 등록되었습니다.')
     return redirect(url_for('manage_items'))
+
+
 
 @app.route('/admin/items/edit/<int:item_id>', methods=['POST'])
 def edit_item(item_id):
@@ -1626,6 +1627,7 @@ def manage_users():
     conn = get_connection()
     cur = conn.cursor()
 
+    # 🔍 검색 키워드 처리
     keyword = request.args.get('keyword', '').strip()
     if keyword:
         cur.execute("""
@@ -1639,14 +1641,15 @@ def manage_users():
 
     users = cur.fetchall()
 
-    # 등록 처리
+    # ✅ 사용자 등록 처리
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        store = request.form.get('store')
+        store_name = request.form.get('store')  # 👉 입력값은 store에서 받아오되
+
         is_admin = True if request.form.get('is_admin') else False
 
-        if not username or not password or not store:
+        if not username or not password or not store_name:
             flash("❗ 모든 필드를 입력해주세요.")
         else:
             # 중복 확인
@@ -1655,9 +1658,9 @@ def manage_users():
                 flash("❌ 이미 존재하는 사용자입니다.")
             else:
                 cur.execute("""
-                    INSERT INTO users (username, password, store, store_name, is_admin)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (username, password, store, store, is_admin))
+                    INSERT INTO users (username, password, store_name, is_admin)
+                    VALUES (%s, %s, %s, %s)
+                """, (username, password, store_name, is_admin))
                 conn.commit()
                 flash("✅ 사용자 등록 완료")
                 return redirect(url_for('manage_users'))
@@ -1665,6 +1668,7 @@ def manage_users():
     cur.close()
     conn.close()
     return render_template('admin_users.html', users=users, keyword=keyword)
+
 
 # 관리자 권한 토글
 @app.route('/admin/users/toggle_admin/<int:user_id>', methods=['POST'])
