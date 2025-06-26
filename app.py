@@ -1,6 +1,7 @@
 import os
 import requests
 from dotenv import load_dotenv
+load_dotenv()
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify, abort
 from werkzeug.utils import secure_filename
@@ -79,7 +80,13 @@ def upload_to_supabase(file, filename=None):
 @app.route("/admin/items/upload", methods=["POST"])
 def upload_item():
     name = request.form.get("name")
-    price = request.form.get("price", 0)
+    
+    # 👇 안전하게 숫자로 변환 (빈 값이면 0)
+    try:
+        price = int(request.form.get("price", 0))
+    except (ValueError, TypeError):
+        price = 0
+
     file = request.files.get("image")
 
     if not file or not name:
@@ -89,7 +96,6 @@ def upload_item():
     if not image_url:
         return jsonify(success=False, message="이미지 업로드 실패")
 
-    # PostgreSQL에 저장
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
@@ -101,6 +107,7 @@ def upload_item():
     conn.close()
 
     return jsonify(success=True, message="상품 업로드 완료", image_url=image_url)
+
 
 # ✅ 상품 이미지 재등록 라우트 추가
 @app.route('/admin/items/update_image/<int:item_id>', methods=['POST'])
