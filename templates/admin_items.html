@@ -117,7 +117,7 @@
       <th>삭제</th>
     </tr>
     {% for item in items %}
-{% for item in items %}
+
 <tr>
   <form method="POST" enctype="multipart/form-data" action="/admin/items/edit/{{ item.id }}">
     <td><input type="text" name="name" value="{{ item.name }}" required></td>

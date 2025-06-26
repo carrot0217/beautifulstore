@@ -263,46 +263,48 @@ def admin_delete_order():
     return jsonify(success=True)
 
 
-from psycopg2.extras import DictCursor 
+from psycopg2.extras import DictCursor
 
 @app.route('/admin/items', methods=['GET', 'POST'])
 def manage_items():
-    if 'user_id' not in session or not session.get('is_admin'):
-        return redirect(url_for('login'))
+    if not session.get('is_admin'):
+        return redirect(url_for('dashboard'))
 
     conn = get_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=DictCursor)
+    message = request.args.get('message')
 
     if request.method == 'POST':
-        name = request.form.get('name')
-        price = request.form.get('price')
-        category = request.form.get('category')
-        image_url = request.form.get('image_url')  # Supabase 업로드된 URL
+        name = request.form['name']
+        description = request.form.get('description', '')
+        stock = int(request.form.get('stock', 0))
+        unit_price = float(request.form.get('unit_price', 0))
+        max_request = request.form.get('max_request')
+        max_request = int(max_request) if max_request else None
+        category = request.form.get('category') or request.form.get('custom-category') or ''
 
-        # ✅ price 오류 방지 처리 (빈 값이면 기본값 0, 또는 에러 방지용 정수 변환)
-        try:
-            price = int(price)
-        except (TypeError, ValueError):
-            price = 0
-
-        if not name or not category:
-            flash("상품명과 카테고리는 필수 항목입니다.")
-            return redirect(url_for('manage_items'))
+        image_url = None
+        if 'image' in request.files and request.files['image']:
+            file = request.files['image']
+            if file and file.filename:
+                image_url = upload_to_supabase(file, filename=name)
 
         cur.execute("""
-            INSERT INTO items (name, price, category, image_url)
-            VALUES (%s, %s, %s, %s)
-        """, (name, price, category, image_url))
+            INSERT INTO items (name, description, quantity, unit_price, category, image_url, max_request)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (name, description, stock, unit_price, category, image_url, max_request))
         conn.commit()
+        cur.close(); conn.close()
+        return redirect(url_for('manage_items', message='added'))
 
-    # ✅ 등록된 모든 상품 목록 불러오기
-    cur.execute("SELECT * FROM items ORDER BY id DESC")
+    # ✅ DictCursor 적용된 fetch
+    cur.execute("""
+        SELECT id, name, description, quantity, unit_price, category, image_url, COALESCE(max_request, 0) AS max_request
+        FROM items ORDER BY id ASC
+    """)
     items = cur.fetchall()
-    cur.close()
-    conn.close()
-
-    return render_template('admin_items.html', items=items, category_list=CATEGORY_LIST)
-
+    cur.close(); conn.close()
+    return render_template('admin_items.html', items=items, message=message, categories=CATEGORY_LIST)
 
 @app.route('/admin/items/add', methods=['POST'])
 def add_item():
