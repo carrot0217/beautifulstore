@@ -266,43 +266,41 @@ def admin_delete_order():
 
 @app.route('/admin/items', methods=['GET', 'POST'])
 def manage_items():
-    if not session.get('is_admin'):
-        return redirect(url_for('dashboard'))
+    if 'user_id' not in session or not session.get('is_admin'):
+        return redirect(url_for('login'))
 
     conn = get_connection()
     cur = conn.cursor()
-    message = request.args.get('message')
 
     if request.method == 'POST':
-        name = request.form['name']
-        description = request.form.get('description', '')
-        stock = int(request.form.get('stock', 0))
-        unit_price = float(request.form.get('unit_price', 0))
-        max_request = request.form.get('max_request')
-        max_request = int(max_request) if max_request else None
-        category = request.form.get('category') or request.form.get('custom-category') or ''
+        name = request.form.get('name')
+        price = request.form.get('price')
+        category = request.form.get('category')
+        image_url = request.form.get('image_url')  # Supabase 업로드된 URL
 
-        image_url = None
-        if 'image' in request.files and request.files['image']:
-            file = request.files['image']
-            if file and file.filename:
-                image_url = upload_to_supabase(file, filename=name)
+        # ✅ price 오류 방지 처리 (빈 값이면 기본값 0, 또는 에러 방지용 정수 변환)
+        try:
+            price = int(price)
+        except (TypeError, ValueError):
+            price = 0
+
+        if not name or not category:
+            flash("상품명과 카테고리는 필수 항목입니다.")
+            return redirect(url_for('manage_items'))
 
         cur.execute("""
-            INSERT INTO items (name, description, quantity, unit_price, category, image_url, max_request)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (name, description, stock, unit_price, category, image_url, max_request))
+            INSERT INTO items (name, price, category, image_url)
+            VALUES (%s, %s, %s, %s)
+        """, (name, price, category, image_url))
         conn.commit()
-        cur.close(); conn.close()
-        return redirect(url_for('manage_items', message='added'))
 
-    cur.execute("""
-        SELECT id, name, description, quantity, unit_price, category, image, COALESCE(max_request, 0)
-        FROM items ORDER BY id ASC
-    """)
+    # ✅ 등록된 모든 상품 목록 불러오기
+    cur.execute("SELECT * FROM items ORDER BY id DESC")
     items = cur.fetchall()
-    cur.close(); conn.close()
-    return render_template('admin_items.html', items=items, message=message, categories=CATEGORY_LIST)
+    cur.close()
+    conn.close()
+
+    return render_template('admin_items.html', items=items, category_list=CATEGORY_LIST)
 
 
 @app.route('/admin/items/add', methods=['POST'])
