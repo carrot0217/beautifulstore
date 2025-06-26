@@ -1,7 +1,6 @@
 import os
 import requests
 from dotenv import load_dotenv
-load_dotenv()
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify, abort
 from werkzeug.utils import secure_filename
@@ -1998,6 +1997,8 @@ def delete_equipments():
 
     return redirect(url_for('manage_equipments'))
 
+
+print("🔍 SUPABASE_BUCKET:", SUPABASE_BUCKET)
 
 # ----------------------- 서버 실행 -----------------------
 if __name__ == '__main__':
