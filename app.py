@@ -32,13 +32,12 @@ SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET")
 
 def upload_to_supabase(file, filename=None):
     try:
-        # ✅ 1. 환경변수 불러오기
-        SUPABASE_URL = os.getenv("SUPABASE_URL")
-        SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-        SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET")
+        # ✅ 전역에서 선언된 SUPABASE_ 변수들을 그대로 사용
+        global SUPABASE_URL, SUPABASE_KEY, SUPABASE_BUCKET
 
         if not SUPABASE_URL or not SUPABASE_KEY or not SUPABASE_BUCKET:
             print("❌ 환경변수 누락: URL / KEY / BUCKET 중 하나 이상이 설정되지 않았습니다.")
+            print(f"[DEBUG] URL={SUPABASE_URL}, BUCKET={SUPABASE_BUCKET}")
             return None
 
         # ✅ 2. 확장자 추출 및 고유 파일명 생성
@@ -53,7 +52,7 @@ def upload_to_supabase(file, filename=None):
             "apikey": SUPABASE_KEY,
             "Authorization": f"Bearer {SUPABASE_KEY}",
             "Content-Type": file.content_type or "application/octet-stream",
-            "x-upsert": "true"  # 동일 파일명일 경우 덮어쓰기 허용
+            "x-upsert": "true"
         }
 
         # ✅ 4. 파일 스트림 초기화 및 읽기
@@ -75,6 +74,7 @@ def upload_to_supabase(file, filename=None):
     except Exception as e:
         print("❌ Supabase 업로드 예외 발생:", str(e))
         return None
+
 # ✅ 상품 업로드 및 DB 저장 라우트
 @app.route("/admin/items/upload", methods=["POST"])
 def upload_item():
@@ -298,28 +298,27 @@ def manage_items():
     return render_template('admin_items.html', items=items, message=message, categories=CATEGORY_LIST)
 
 
-# ✅ 상품 등록 라우트
 @app.route('/admin/items/add', methods=['POST'])
 def add_item():
     if 'user_id' not in session or not session.get('is_admin'):
         return redirect(url_for('login'))
 
-    name = request.form.get('name')
-    price = request.form.get('price')
-    category = request.form.get('category')
-    description = request.form.get('description')
+    name = request.form.get('name', '').strip()
+    category = request.form.get('category', '').strip()
+    description = request.form.get('description', '').strip()
     file = request.files.get('image')
 
-    # ✅ 필수 항목 확인
-    if not name or not price or not category:
-        flash('❗ 모든 필수 항목을 입력해 주세요.')
-        return redirect(url_for('manage_items'))
-
-    # ✅ 가격 숫자 검증
+    # ✅ 가격은 float 허용 + 기본값 0
+    price_input = request.form.get('price', '').strip()
     try:
-        price = int(price)
+        unit_price = float(price_input)
     except (ValueError, TypeError):
         flash('❗ 가격은 숫자만 입력해 주세요.')
+        return redirect(url_for('manage_items'))
+
+    # ✅ 필수 항목 확인
+    if not name or not price_input or not category:
+        flash('❗ 모든 필수 항목을 입력해 주세요.')
         return redirect(url_for('manage_items'))
 
     # ✅ 이미지 업로드
@@ -328,6 +327,7 @@ def add_item():
         image_url = upload_to_supabase(file, filename=name)
         if not image_url:
             flash('❗ 이미지 업로드에 실패했습니다.')
+            print("❌ 업로드 실패 → SUPABASE_BUCKET 또는 KEY 확인")
             return redirect(url_for('manage_items'))
 
     # ✅ DB 저장
@@ -335,9 +335,9 @@ def add_item():
         conn = get_connection()
         cur = conn.cursor()
         cur.execute("""
-            INSERT INTO items (name, price, category, description, image_url)
+            INSERT INTO items (name, unit_price, category, description, image_url)
             VALUES (%s, %s, %s, %s, %s)
-        """, (name, price, category, description, image_url))
+        """, (name, unit_price, category, description, image_url))
         conn.commit()
         cur.close()
         conn.close()
@@ -348,7 +348,6 @@ def add_item():
         flash('❌ 상품 등록 중 오류가 발생했습니다.')
 
     return redirect(url_for('manage_items'))
-
 
 
 
