@@ -117,48 +117,50 @@
       <th>삭제</th>
     </tr>
     {% for item in items %}
-    <tr>
-      <form method="POST" enctype="multipart/form-data" action="/admin/items/edit/{{ item[0] }}">
-        <td><input type="text" name="name" value="{{ item[1] }}" required></td>
-        <td><input type="text" name="category" value="{{ item[5] or '' }}" required></td>
-        <td><input type="text" name="description" value="{{ item[2] }}"></td>
-        <td><input type="number" name="stock" value="{{ item[3] }}" required></td>
-        <td>
-          <div class="price-input-wrapper">
-            <input type="number" step="0.01" name="unit_price" value="{{ item[4] }}" required> <!-- ✅ float 유지 -->
-            <span>원</span>
-          </div>
-        </td>
-        <td><input type="number" name="max_request" value="{{ item[7] or 0 }}" required></td>
-        <td style="text-align: center;">
-          {% if item[6] %}
-          <div style="position: relative; display: inline-block;">
-            <img src="{{ item[6] }}" class="thumbnail" onerror="this.style.display='none'">
-            <span class="zoom-icon" onclick="openPopup('{{ item[6] }}')">🔍</span>
-          </div>
-          {% else %}
-            <span style="color: #bbb;"><i class="fas fa-image"></i> 없음</span>
-          {% endif %}
-          <div style="margin-top: 6px;">
-            <input type="file" name="image" accept="image/*">
-            <small style="font-size: 0.8em; color: #666;">※ 새 이미지 선택 시 기존 이미지가 변경됩니다.</small>
-          </div>
-        </td>
-        <td>
-          <button type="submit" class="btn-edit">
-            <span class="btn-emoji">📂</span><span class="btn-label">수정</span>
-          </button>
-        </td>
-      </form>
-      <td>
-        <form method="POST" action="/admin/items/delete/{{ item[0] }}">
-          <button type="submit" class="btn-delete" onclick="return confirm('정말 삭제하시겠습니까?');">
-            <span class="btn-emoji">❌</span><span class="btn-label">삭제</span>
-          </button>
-        </form>
-      </td>
-    </tr>
-    {% endfor %}
+{% for item in items %}
+<tr>
+  <form method="POST" enctype="multipart/form-data" action="/admin/items/edit/{{ item.id }}">
+    <td><input type="text" name="name" value="{{ item.name }}" required></td>
+    <td><input type="text" name="category" value="{{ item.category or '' }}" required></td>
+    <td><input type="text" name="description" value="{{ item.description }}"></td>
+    <td><input type="number" name="stock" value="{{ item.stock }}" required></td>
+    <td>
+      <div class="price-input-wrapper">
+        <input type="number" step="0.01" name="unit_price" value="{{ item.unit_price }}" required>
+        <span>원</span>
+      </div>
+    </td>
+    <td><input type="number" name="max_request" value="{{ item.max_request or 0 }}" required></td>
+    <td style="text-align: center;">
+      {% if item.image_url %}
+      <div style="position: relative; display: inline-block;">
+        <img src="{{ item.image_url }}" class="thumbnail" onerror="this.style.display='none'">
+        <span class="zoom-icon" onclick="openPopup('{{ item.image_url }}')">🔍</span>
+      </div>
+      {% else %}
+        <span style="color: #bbb;"><i class="fas fa-image"></i> 없음</span>
+      {% endif %}
+      <div style="margin-top: 6px;">
+        <input type="file" name="image" accept="image/*">
+        <small style="font-size: 0.8em; color: #666;">※ 새 이미지 선택 시 기존 이미지가 변경됩니다.</small>
+      </div>
+    </td>
+    <td>
+      <button type="submit" class="btn-edit">
+        <span class="btn-emoji">📂</span><span class="btn-label">수정</span>
+      </button>
+    </td>
+  </form>
+  <td>
+    <form method="POST" action="/admin/items/delete/{{ item.id }}">
+      <button type="submit" class="btn-delete" onclick="return confirm('정말 삭제하시겠습니까?');">
+        <span class="btn-emoji">❌</span><span class="btn-label">삭제</span>
+      </button>
+    </form>
+  </td>
+</tr>
+{% endfor %}
+
   </table>
 
   <div id="customModal">
