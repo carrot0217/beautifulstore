@@ -2,7 +2,7 @@ import os
 import requests
 from dotenv import load_dotenv
 
-cfrom flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify, abort
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify, abort
 from werkzeug.utils import secure_filename
 from db import get_connection
 from datetime import datetime, date, timedelta
