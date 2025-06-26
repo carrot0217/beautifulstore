@@ -271,59 +271,29 @@ def manage_items():
         return redirect(url_for('login'))
 
     conn = get_connection()
-    cur = conn.cursor(cursor_factory=DictCursor)
+    cur = conn.cursor()
 
     if request.method == 'POST':
-        # ✅ 폼 값 추출
         name = request.form.get('name')
-        category = request.form.get('custom-category') or request.form.get('category')
-        unit_price = request.form.get('unit_price')
-        max_request = request.form.get('max_request')
-        description = request.form.get('description')
-        stock = request.form.get('stock')
-        image_file = request.files.get('image')
+        price = request.form.get('price')
+        category = request.form.get('category')
+        image_url = request.form.get('image_url')  # Supabase 업로드된 URL
 
-        # ✅ 단가, 수량 숫자형으로 처리
+        # ✅ price 오류 방지 처리 (빈 값이면 기본값 0, 또는 에러 방지용 정수 변환)
         try:
-            unit_price = int(float(unit_price)) if unit_price else 0
-        except:
-            unit_price = 0
+            price = int(price)
+        except (TypeError, ValueError):
+            price = 0
 
-        try:
-            stock = int(stock) if stock else 0
-        except:
-            stock = 0
-
-        try:
-            max_request = int(max_request) if max_request else 0
-        except:
-            max_request = 0
-
-        # ✅ Supabase 이미지 업로드
-        image_url = None
-        if image_file and image_file.filename:
-            ext = os.path.splitext(image_file.filename)[1]
-            filename = f"{uuid.uuid4().hex}{ext}"
-            image_url = upload_to_supabase(image_file, filename=filename)  # ✅ URL 반환됨
-
-        # ✅ 필수값 확인
         if not name or not category:
             flash("상품명과 카테고리는 필수 항목입니다.")
             return redirect(url_for('manage_items'))
 
-        # ✅ DB 저장
         cur.execute("""
-            INSERT INTO items (name, category, unit_price, max_request, description, stock, image_url)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (name, category, unit_price, max_request, description, stock, image_url))
+            INSERT INTO items (name, price, category, image_url)
+            VALUES (%s, %s, %s, %s)
+        """, (name, price, category, image_url))
         conn.commit()
-
-        return redirect(url_for('manage_items', message="added"))
-
-    # GET 요청 시 상품 목록 조회
-    cur.execute("SELECT * FROM items ORDER BY id DESC")
-    items = cur.fetchall()
-    return render_template("admin_items.html", items=items)
 
     # ✅ 등록된 모든 상품 목록 불러오기
     cur.execute("SELECT * FROM items ORDER BY id DESC")
