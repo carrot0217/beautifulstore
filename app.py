@@ -31,41 +31,49 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET")
 
-def upload_to_supabase(file, filename):
+def upload_to_supabase(file, filename=None):
     try:
-        # 확장자 추출 및 고유 파일명 생성
+        # ✅ 환경변수 가져오기
+        SUPABASE_URL = os.getenv("SUPABASE_URL")
+        SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+        SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET")
+
+        if not SUPABASE_URL or not SUPABASE_KEY or not SUPABASE_BUCKET:
+            print("❌ 환경변수 누락: URL / KEY / BUCKET 중 하나 이상이 설정되지 않았습니다.")
+            return None
+
+        # ✅ 확장자 추출 및 고유 파일명 생성
         ext = os.path.splitext(file.filename)[1].lower()
         unique_filename = f"{uuid.uuid4().hex}{ext}"
-        
-        # Supabase 업로드 경로 (PUT 방식)
-        upload_url = f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_BUCKET}/{unique_filename}"
+        final_filename = filename if filename else unique_filename
 
-        # 요청 헤더 설정
+        # ✅ Supabase 업로드 경로 (PUT 방식)
+        upload_url = f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_BUCKET}/{final_filename}"
+
         headers = {
             "apikey": SUPABASE_KEY,
             "Authorization": f"Bearer {SUPABASE_KEY}",
             "Content-Type": file.content_type or "application/octet-stream",
-            "x-upsert": "true"  # 같은 이름이면 덮어쓰기
+            "x-upsert": "true"  # 중복시 덮어쓰기
         }
 
-        # 파일 스트림 초기화 후 업로드
+        # ✅ 파일 스트림 읽기
         file.stream.seek(0)
         file_bytes = file.read()
+
         response = requests.put(upload_url, headers=headers, data=file_bytes)
 
-        # 응답 처리
         if response.status_code in [200, 201]:
-            public_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{unique_filename}"
-            print("✅ Supabase 이미지 업로드 성공:", public_url)
+            public_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{final_filename}"
+            print("✅ Supabase 업로드 성공:", public_url)
             return public_url
         else:
-            print("❌ 업로드 실패:", response.status_code, response.text)
+            print("❌ Supabase 업로드 실패:", response.status_code, response.text)
             return None
 
     except Exception as e:
-        print("❌ 예외 발생:", str(e))
+        print("❌ Supabase 업로드 예외:", str(e))
         return None
-
 # ✅ 상품 업로드 및 DB 저장 라우트
 @app.route("/admin/items/upload", methods=["POST"])
 def upload_item():
@@ -289,6 +297,7 @@ def manage_items():
     return render_template('admin_items.html', items=items, message=message, categories=CATEGORY_LIST)
 
 
+# ✅ 상품 등록 라우트
 @app.route('/admin/items/add', methods=['POST'])
 def add_item():
     if 'user_id' not in session or not session.get('is_admin'):
@@ -300,35 +309,45 @@ def add_item():
     description = request.form.get('description')
     file = request.files.get('image')
 
+    # ✅ 필수 항목 확인
     if not name or not price or not category:
         flash('❗ 모든 필수 항목을 입력해 주세요.')
         return redirect(url_for('manage_items'))
 
-    # 가격 숫자 검증
+    # ✅ 가격 숫자 검증
     try:
         price = int(price)
     except (ValueError, TypeError):
         flash('❗ 가격은 숫자만 입력해 주세요.')
         return redirect(url_for('manage_items'))
 
-    # ✅ Supabase 이미지 업로드
+    # ✅ 이미지 업로드
     image_url = ''
     if file and file.filename != '':
         image_url = upload_to_supabase(file, filename=name)
+        if not image_url:
+            flash('❗ 이미지 업로드에 실패했습니다.')
+            return redirect(url_for('manage_items'))
 
     # ✅ DB 저장
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        INSERT INTO items (name, price, category, description, image_url)
-        VALUES (%s, %s, %s, %s, %s)
-    """, (name, price, category, description, image_url))
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO items (name, price, category, description, image_url)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (name, price, category, description, image_url))
+        conn.commit()
+        cur.close()
+        conn.close()
 
-    flash('✅ 상품이 등록되었습니다.')
+        flash('✅ 상품이 등록되었습니다.')
+    except Exception as e:
+        print("❌ DB 등록 오류:", str(e))
+        flash('❌ 상품 등록 중 오류가 발생했습니다.')
+
     return redirect(url_for('manage_items'))
+
 
 
 
