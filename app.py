@@ -33,7 +33,7 @@ SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET")
 
 def upload_to_supabase(file, filename=None):
     try:
-        # ✅ 환경변수 가져오기
+        # ✅ 1. 환경변수 불러오기
         SUPABASE_URL = os.getenv("SUPABASE_URL")
         SUPABASE_KEY = os.getenv("SUPABASE_KEY")
         SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET")
@@ -42,27 +42,29 @@ def upload_to_supabase(file, filename=None):
             print("❌ 환경변수 누락: URL / KEY / BUCKET 중 하나 이상이 설정되지 않았습니다.")
             return None
 
-        # ✅ 확장자 추출 및 고유 파일명 생성
+        # ✅ 2. 확장자 추출 및 고유 파일명 생성
         ext = os.path.splitext(file.filename)[1].lower()
         unique_filename = f"{uuid.uuid4().hex}{ext}"
         final_filename = filename if filename else unique_filename
 
-        # ✅ Supabase 업로드 경로 (PUT 방식)
+        # ✅ 3. Supabase PUT 요청용 URL 생성
         upload_url = f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_BUCKET}/{final_filename}"
 
         headers = {
             "apikey": SUPABASE_KEY,
             "Authorization": f"Bearer {SUPABASE_KEY}",
             "Content-Type": file.content_type or "application/octet-stream",
-            "x-upsert": "true"  # 중복시 덮어쓰기
+            "x-upsert": "true"  # 동일 파일명일 경우 덮어쓰기 허용
         }
 
-        # ✅ 파일 스트림 읽기
+        # ✅ 4. 파일 스트림 초기화 및 읽기
         file.stream.seek(0)
         file_bytes = file.read()
 
+        # ✅ 5. Supabase로 파일 업로드 (PUT)
         response = requests.put(upload_url, headers=headers, data=file_bytes)
 
+        # ✅ 6. 응답 처리
         if response.status_code in [200, 201]:
             public_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{final_filename}"
             print("✅ Supabase 업로드 성공:", public_url)
@@ -72,7 +74,7 @@ def upload_to_supabase(file, filename=None):
             return None
 
     except Exception as e:
-        print("❌ Supabase 업로드 예외:", str(e))
+        print("❌ Supabase 업로드 예외 발생:", str(e))
         return None
 # ✅ 상품 업로드 및 DB 저장 라우트
 @app.route("/admin/items/upload", methods=["POST"])
