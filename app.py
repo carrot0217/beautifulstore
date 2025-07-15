@@ -10,6 +10,7 @@ from datetime import datetime, date, timedelta
 import pandas as pd
 import io
 import uuid
+import urllib.parse
 
 # ✅ 이 줄 추가
 from psycopg2.extras import DictCursor
@@ -33,7 +34,6 @@ SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET")
 
 def upload_to_supabase(file, filename=None):
     try:
-        # ✅ 전역에서 선언된 SUPABASE_ 변수들을 그대로 사용
         global SUPABASE_URL, SUPABASE_KEY, SUPABASE_BUCKET
 
         if not SUPABASE_URL or not SUPABASE_KEY or not SUPABASE_BUCKET:
@@ -44,9 +44,13 @@ def upload_to_supabase(file, filename=None):
         # ✅ 2. 확장자 추출 및 고유 파일명 생성
         ext = os.path.splitext(file.filename)[1].lower()
         unique_filename = f"{uuid.uuid4().hex}{ext}"
-        final_filename = filename if filename else unique_filename
 
-        # ✅ 3. Supabase PUT 요청용 URL 생성
+        # ✅ 3. Supabase에 안전하게 업로드할 파일명 결정
+        # - 인자로 받은 filename이 있다면 그것도 URL-safe 처리
+        safe_filename = urllib.parse.quote(filename) if filename else unique_filename
+        final_filename = safe_filename
+
+        # ✅ 4. Supabase PUT 요청용 URL 생성
         upload_url = f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_BUCKET}/{final_filename}"
 
         headers = {
@@ -56,14 +60,14 @@ def upload_to_supabase(file, filename=None):
             "x-upsert": "true"
         }
 
-        # ✅ 4. 파일 스트림 초기화 및 읽기
+        # ✅ 5. 파일 스트림 초기화 및 읽기
         file.stream.seek(0)
         file_bytes = file.read()
 
-        # ✅ 5. Supabase로 파일 업로드 (PUT)
+        # ✅ 6. Supabase로 파일 업로드 (PUT)
         response = requests.put(upload_url, headers=headers, data=file_bytes)
 
-        # ✅ 6. 응답 처리
+        # ✅ 7. 응답 처리
         if response.status_code in [200, 201]:
             public_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{final_filename}"
             print("✅ Supabase 업로드 성공:", public_url)
@@ -75,6 +79,7 @@ def upload_to_supabase(file, filename=None):
     except Exception as e:
         print("❌ Supabase 업로드 예외 발생:", str(e))
         return None
+    
 
 # ✅ 상품 업로드 및 DB 저장 라우트
 @app.route("/admin/items/upload", methods=["POST"])
