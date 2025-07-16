@@ -37,20 +37,17 @@ def upload_to_supabase(file, filename=None):
         global SUPABASE_URL, SUPABASE_KEY, SUPABASE_BUCKET
 
         if not SUPABASE_URL or not SUPABASE_KEY or not SUPABASE_BUCKET:
-            print("❌ 환경변수 누락: URL / KEY / BUCKET 중 하나 이상이 설정되지 않았습니다.")
-            print(f"[DEBUG] URL={SUPABASE_URL}, BUCKET={SUPABASE_BUCKET}")
+            print("❌ 환경변수 누락")
             return None
 
-        # ✅ 2. 확장자 추출 및 고유 파일명 생성
+        # ✅ 확장자만 추출하고, 이름은 무조건 안전한 UUID 기반
         ext = os.path.splitext(file.filename)[1].lower()
         unique_filename = f"{uuid.uuid4().hex}{ext}"
 
-        # ✅ 3. Supabase에 안전하게 업로드할 파일명 결정
-        # - 인자로 받은 filename이 있다면 그것도 URL-safe 처리
-        safe_filename = urllib.parse.quote(filename) if filename else unique_filename
+        # ✅ URL-safe 처리 (꼭 필요함)
+        safe_filename = urllib.parse.quote(unique_filename)
         final_filename = safe_filename
 
-        # ✅ 4. Supabase PUT 요청용 URL 생성
         upload_url = f"{SUPABASE_URL}/storage/v1/object/{SUPABASE_BUCKET}/{final_filename}"
 
         headers = {
@@ -60,14 +57,11 @@ def upload_to_supabase(file, filename=None):
             "x-upsert": "true"
         }
 
-        # ✅ 5. 파일 스트림 초기화 및 읽기
         file.stream.seek(0)
         file_bytes = file.read()
 
-        # ✅ 6. Supabase로 파일 업로드 (PUT)
         response = requests.put(upload_url, headers=headers, data=file_bytes)
 
-        # ✅ 7. 응답 처리
         if response.status_code in [200, 201]:
             public_url = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{final_filename}"
             print("✅ Supabase 업로드 성공:", public_url)
