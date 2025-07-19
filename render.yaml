@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: beautifulstore-app
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn app:app"
+    plan: free
+    region: singapore
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.13    # ✅ 여기만 변경
+      - key: SUPABASE_URL
+        value: your_supabase_url
+      - key: SUPABASE_KEY
+        value: your_supabase_key

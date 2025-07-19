@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>📩 새 쪽지 보내기</title>
+  <style>
+    body {
+      background: #fffaf3;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 40px;
+    }
+    label, select, textarea, button {
+      display: block;
+      margin-bottom: 16px;
+      width: 100%;
+      max-width: 400px;
+    }
+    textarea {
+      height: 120px;
+    }
+    button {
+      background-color: #ffcc80;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    select {
+      padding: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📩 새 쪽지 보내기</h1>
+
+  <form method="POST">
+    <label for="recipient">받는 사람</label>
+    <select name="recipient" id="recipient" required>
+      <option value="" disabled selected>받는 사람을 선택하세요</option>
+      {% for r in recipients %}
+        <option value="{{ r[0] }}">{{ r[1] }}</option>  <!-- r[0]: username, r[1]: store_name -->
+      {% endfor %}
+    </select>
+
+    <label for="content">쪽지 내용</label>
+    <textarea name="content" id="content" required></textarea>
+
+    <button type="submit">보내기</button>
+  </form>
+</body>
+</html>

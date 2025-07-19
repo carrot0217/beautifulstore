@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>삭제 사유 입력</title>
+  <style>
+    body {
+      background-color: #fffaf3;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 60px;
+    }
+    textarea {
+      width: 80%;
+      height: 120px;
+      padding: 10px;
+      font-size: 1em;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      resize: none;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #ffcc80;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>📝 삭제 사유를 입력해주세요</h2>
+  <form method="post">
+    <textarea name="reason" placeholder="예: 잘못 신청했습니다."></textarea><br>
+    <button type="submit">삭제 요청</button>
+  </form>
+</body>
+</html>

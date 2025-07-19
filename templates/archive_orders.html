@@ -1,0 +1,100 @@
+<!-- templates/archive_orders.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>🗂️ 아카이브 주문 내역</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background-color: #fffaf3;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 40px;
+      text-align: center;
+    }
+    h1 {
+      color: #5a4031;
+      margin-bottom: 20px;
+    }
+    table {
+      margin: 0 auto;
+      width: 90%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+    }
+    th {
+      background-color: #ffcc80;
+      color: #4e342e;
+    }
+    form {
+      margin-bottom: 20px;
+    }
+    input, select, button {
+      padding: 8px;
+      margin: 6px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    .btn-download {
+      background-color: #ffcc80;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    a {
+      text-decoration: none;
+      color: #4e342e;
+    }
+  </style>
+</head>
+<body>
+  <h1>🗂️ 아카이브 주문 내역</h1>
+
+  <form method="get" action="/admin/archive-view">
+    <label>📅 시작일: <input type="date" name="start_date" value="{{ request.args.get('start_date', '') }}"></label>
+    <label>📅 종료일: <input type="date" name="end_date" value="{{ request.args.get('end_date', '') }}"></label>
+    <label>📦 품목명:
+      <select name="item_name">
+        <option value="">전체</option>
+        {% for name in item_names %}
+        <option value="{{ name }}" {% if request.args.get('item_name') == name %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>📌 상태:
+      <select name="status">
+        <option value="">전체</option>
+        <option value="완료" {% if request.args.get('status') == '완료' %}selected{% endif %}>완료</option>
+        <option value="대기 중" {% if request.args.get('status') == '대기 중' %}selected{% endif %}>대기 중</option>
+      </select>
+    </label>
+    <button type="submit" class="btn-download">🔍 필터 적용</button>
+  </form>
+<a href="{{ url_for('download_archive') }}">
+  <button class="btn-download">📥 엑셀 다운로드</button>
+</a>
+
+  <table>
+    <tr>
+      <th>신청일</th>
+      <th>품목명</th>
+      <th>수량</th>
+      <th>상태</th>
+      <th>배송일</th>
+    </tr>
+    {% for order in archive_orders %}
+    <tr>
+      <td>{{ order['wish_date'] }}</td>
+      <td>{{ order['item_name'] }}</td>
+      <td>{{ order['quantity'] }}</td>
+      <td>{{ order['status'] }}</td>
+      <td>{{ order['delivery_date'] or '-' }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>

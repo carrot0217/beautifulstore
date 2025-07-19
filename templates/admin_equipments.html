@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>📎 비품 요청/접수</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background-color: #fffaf3;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 40px;
+    }
+    h1 {
+      font-size: 1.8em;
+      color: #5a4031;
+      margin-bottom: 20px;
+    }
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    input[type="text"], input[type="file"] {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      background-color: #ffc107;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #ffb300;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 2px 10px #eee;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 14px;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+    }
+    th {
+      background-color: #ffeb99;
+      color: #5a4031;
+    }
+    img {
+      width: 40px;
+      height: auto;
+      object-fit: cover;
+    }
+  </style>
+</head>
+<body>
+  <h1>📎 비품 등록</h1>
+
+  <!-- 비품 등록 폼 -->
+  <form method="POST" action="/admin/equipments" enctype="multipart/form-data">
+    <input type="text" name="name" placeholder="비품명" required>
+    <input type="file" name="file" accept="image/*">
+    <button type="submit">등록</button>
+  </form>
+
+  <!-- 선택 삭제 버튼 -->
+  <form method="POST" action="/admin/equipment/delete" id="deleteForm">
+    <button type="submit">선택 삭제</button>
+  </form>
+
+  <!-- 비품 테이블 -->
+  <table>
+    <thead>
+      <tr>
+        <th><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
+        <th>사진</th>
+        <th>비품명</th>
+        <th>수량</th>
+        <th>등록일</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for eq in equipments %}
+        <tr>
+          <td><input type="checkbox" name="delete_ids" form="deleteForm" value="{{ eq.id }}"></td>
+          <td>
+            {% if eq.image_url %}
+              <img src="{{ eq.image_url }}" alt="비품 이미지">
+            {% else %}
+              <img src="/static/img/noimage.png" alt="기본 이미지">
+            {% endif %}
+          </td>
+          <td>{{ eq.name }}</td>
+          <!-- <td>{{ eq.unit_price }}</td> -->
+          <!-- <td>{{ eq.stock }}</td> -->
+          <td>
+            {% if eq.created_at %}
+              {{ eq.created_at.strftime('%Y-%m-%d') }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <script>
+    function toggleAll(source) {
+      const checkboxes = document.querySelectorAll('input[name="delete_ids"]');
+      checkboxes.forEach(cb => cb.checked = source.checked);
+    }
+  </script>
+</body>
+</html>

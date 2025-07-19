@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>📋 전체 주문 목록</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" rel="stylesheet">
+  <style>
+    .pagination {
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      font-family: 'SUIT', 'Noto Sans KR', sans-serif;
+    }
+
+    .pagination a,
+    .pagination span {
+      padding: 8px 16px;
+      border-radius: 10px;
+      background-color: #aed581;
+      text-decoration: none;
+      font-weight: 500;
+      color: #4e342e;
+      font-size: 1rem;
+      transition: all 0.2s ease-in-out;
+      box-shadow: 0 2px 4px #ccc;
+    }
+
+    .pagination a:hover {
+      background-color: #9ccc65;
+      transform: translateY(-1px);
+    }
+
+    .pagination .active {
+      background-color: #ffd54f;
+      font-weight: bold;
+      color: #3e2723;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #fffaf3;
+      text-align: center;
+      padding: 30px;
+    }
+    h1 {
+      color: #5a4031;
+      margin-bottom: 20px;
+    }
+    .filter-form {
+      margin-bottom: 24px;
+      font-size: 1em;
+    }
+    .filter-form input[type="date"],
+    .filter-form input[type="text"],
+    .filter-form select {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background: #ffe0b2;
+      margin: 0 5px;
+    }
+    table {
+      margin: auto;
+      border-collapse: collapse;
+      width: 95%;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      vertical-align: top;
+    }
+    th {
+      background-color: #ffcc80;
+    }
+    .btn {
+      background-color: #aed581;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 2px;
+    }
+    .btn-download {
+      background-color: #ffcc80;
+      color: #4e342e;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 20px;
+      font-weight: bold;
+      margin-left: 8px;
+      cursor: pointer;
+      transition: background 0.18s;
+    }
+    .btn-download:hover {
+      background-color: #ffc04d;
+    }
+    .status-cancelled {
+      color: #d32f2f;
+      font-weight: bold;
+    }
+    .status-deleted {
+      color: red;
+      font-weight: bold;
+    }
+    small {
+      font-size: 0.85em;
+      color: #444;
+    }
+    #deliveryModal, #deleteModal {
+      display: none;
+      position: fixed;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fffaf3;
+      border: 2px solid #d88f30;
+      padding: 20px;
+      border-radius: 12px;
+      z-index: 9999;
+      text-align: center;
+      box-shadow: 0 0 10px #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div style="margin-bottom: 18px; text-align: left;">
+    <a href="{{ url_for('dashboard') }}" style="
+        background-color: #ffd180;
+        color: #4e342e;
+        text-decoration: none;
+        padding: 10px 18px;
+        border-radius: 12px;
+        font-weight: bold;
+        box-shadow: 0 2px 6px #ffecb3;
+        display: inline-block;">
+      ⬅️ 이전 화면
+    </a>
+  </div>
+
+  <h1>📋 전체 주문 목록</h1>
+  <form class="filter-form" method="get" action="">
+    <select name="status">
+      {% for s in status_choices %}
+        <option value="{{s}}" {% if s == status %}selected{% endif %}>{{s}}</option>
+      {% endfor %}
+    </select>
+    <input type="date" name="start_date" value="{{start_date}}">
+    <input type="date" name="end_date" value="{{end_date}}">
+    <input type="text" name="keyword" value="{{keyword}}" placeholder="매장/품목명 검색">
+    <button type="submit">🔎 필터 적용</button>
+  </form>
+<form method="post" action="/admin/delete_bulk" onsubmit="return confirm('선택한 주문을 삭제하시겠습니까?');">
+  <button type="submit" class="btn-download" style="background:#ef5350; color:white;">🗑 선택 주문 삭제</button>
+
+
+<button onclick="window.print()" style="
+  padding: 8px 14px;
+  background-color: #ffe082;
+  color: #4e342e;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 4px #ccc;
+  margin-left: 10px;
+">
+🖨️ 인쇄하기
+</button>
+  <table>
+    <thead>
+      <tr>
+        <th><input type="checkbox" onclick="toggleAll(this)"></th>
+        <th>주문일</th>
+        <th>매장</th>
+        <th>품목</th>
+        <th>수량</th>
+        <th>상태</th>
+        <th>배송일</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for order in orders %}
+        <tr>
+          <td><input type="checkbox" name="order_ids" value="{{ order[0] }}"></td>
+          <td>{{ order[1] }}</td>
+          <td>{{ order[2] }}</td>
+          <td>{{ order[3] }}</td>
+          <td>{{ order[4] }}</td>
+          <td>
+            {% if order[5] == '삭제됨' %}
+              <span class="status-deleted">삭제됨</span><br>
+              {% if order[8] %}<small>{{ order[8] }}</small><br>{% endif %}
+            {% elif order[5].startswith('취소됨') %}
+              <span class="status-cancelled">{{ order[5] }}</span><br>
+              {% if order[8] %}<small>{{ order[8] }}</small>{% endif %}
+            {% else %}
+              {{ order[5] }}<br>
+              <button class="btn btn-download" onclick="openDeleteModal({{ order[0] }})" type="button">🗑 주문 삭제</button>
+            {% endif %}
+          </td>
+          <td>
+            {% if order[5] == '대기 중' %}
+              <input type="date" id="delivery_date_{{ order[0] }}" value="{{ order[6] if order[6] else '' }}">
+              <button class="btn" onclick="submitDelivery({{ order[0] }})" type="button">📦 배송일 입력</button>
+            {% else %}
+              {{ order[6] }}
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</form>
+  <div id="deliveryModal">
+    <p style="margin-bottom:12px;">✅ 배송일 설정이 완료되었습니다!</p>
+    <button onclick="closeModal()">닫기</button>
+  </div>
+
+  <div id="deleteModal">
+    <h3>삭제 사유 입력</h3>
+    <input type="hidden" id="delete_order_id">
+    <textarea id="delete_reason" rows="3" style="width:100%; margin:10px 0;"></textarea>
+    <button onclick="submitDelete()" class="btn">확인</button>
+    <button onclick="closeDeleteModal()" class="btn">취소</button>
+  </div>
+
+  <div class="pagination">
+    {% if total_pages > 1 %}
+      {% if page > 1 %}
+        <a href="?page={{ page - 1 }}&status={{status}}&start_date={{start_date}}&end_date={{end_date}}&keyword={{keyword}}">⬅ 이전</a>
+      {% endif %}
+      {% for p in range(1, total_pages + 1) %}
+        {% if p == page %}
+          <span class="active">{{ p }}</span>
+        {% else %}
+          <a href="?page={{ p }}&status={{status}}&start_date={{start_date}}&end_date={{end_date}}&keyword={{keyword}}">{{ p }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if page < total_pages %}
+        <a href="?page={{ page + 1 }}&status={{status}}&start_date={{start_date}}&end_date={{end_date}}&keyword={{keyword}}">다음 ➡</a>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  <script>
+    function submitDelivery(orderId) {
+      const dateInput = document.getElementById('delivery_date_' + orderId);
+      const deliveryDate = dateInput.value;
+
+      if (!deliveryDate) {
+        alert('배송일을 선택해주세요.');
+        return;
+      }
+
+      fetch('/admin/update_delivery_date', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: orderId, delivery_date: deliveryDate })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showModal();
+        } else {
+          alert(data.message || '배송일 설정 실패');
+        }
+      });
+    }
+
+    function showModal() {
+      document.getElementById('deliveryModal').style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('deliveryModal').style.display = 'none';
+      location.reload();
+    }
+
+    function openDeleteModal(orderId) {
+      document.getElementById('delete_order_id').value = orderId;
+      document.getElementById('delete_reason').value = '';
+      document.getElementById('deleteModal').style.display = 'block';
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    function submitDelete() {
+      const orderId = document.getElementById('delete_order_id').value;
+      const reason = document.getElementById('delete_reason').value;
+
+      if (!reason.trim()) {
+        alert('삭제 사유를 입력해주세요.');
+        return;
+      }
+
+      fetch('/admin/delete_order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: orderId, reason: reason })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('삭제 완료!');
+          location.reload();
+        } else {
+          alert(data.message || '삭제 실패');
+        }
+      });
+    }
+  function toggleAll(source) {
+    const checkboxes = document.querySelectorAll('input[name="order_ids"]');
+    checkboxes.forEach(cb => cb.checked = source.checked);
+  }
+  </script>
+
+</body>
+</html>
